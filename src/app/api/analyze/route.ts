@@ -54,26 +54,29 @@ export async function POST(request: NextRequest) {
     }
 
     // 构建消息内容
-    const content: Array<{ type: "text" | "image"; text?: string; image?: string }> = [];
+    const content: Array<
+      | { type: "text"; text: string }
+      | { type: "image"; image: string }
+    > = [];
     
     // 添加用户提供的背景信息
     if (context) {
       content.push({
-        type: "text",
+        type: "text" as const,
         text: `背景信息：${context}`,
       });
     }
 
     content.push({
-      type: "text",
+      type: "text" as const,
       text: "请分析以下聊天截图中的沟通问题：",
     });
 
     // 添加图片
     for (const image of images) {
       content.push({
-        type: "image",
-        image: image, // base64 格式
+        type: "image" as const,
+        image: image,
       });
     }
 
@@ -92,7 +95,6 @@ export async function POST(request: NextRequest) {
     // 解析 JSON 结果
     let result;
     try {
-      // 尝试提取 JSON
       const jsonMatch = text.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         result = JSON.parse(jsonMatch[0]);
