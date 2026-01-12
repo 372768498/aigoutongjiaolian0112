@@ -1,8 +1,7 @@
-import { createOpenAI } from "@ai-sdk/openai";
-import { generateText } from "ai";
 import { NextRequest, NextResponse } from "next/server";
+import OpenAI from "openai";
 
-const openai = createOpenAI({
+const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
@@ -54,43 +53,47 @@ export async function POST(request: NextRequest) {
     }
 
     // 构建消息内容
-    const content: Array<
-      | { type: "text"; text: string }
-      | { type: "image"; image: string }
-    > = [];
+    const contentParts: OpenAI.Chat.Completions.ChatCompletionContentPart[] = [];
     
     // 添加用户提供的背景信息
     if (context) {
-      content.push({
-        type: "text" as const,
+      contentParts.push({
+        type: "text",
         text: `背景信息：${context}`,
       });
     }
 
-    content.push({
-      type: "text" as const,
+    contentParts.push({
+      type: "text",
       text: "请分析以下聊天截图中的沟通问题：",
     });
 
     // 添加图片
     for (const image of images) {
-      content.push({
-        type: "image" as const,
-        image: image,
+      contentParts.push({
+        type: "image_url",
+        image_url: {
+          url: `data:image/jpeg;base64,${image}`,
+        },
       });
     }
 
-    const { text } = await generateText({
-      model: openai("gpt-4o"),
-      system: SYSTEM_PROMPT,
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o",
       messages: [
         {
+          role: "system",
+          content: SYSTEM_PROMPT,
+        },
+        {
           role: "user",
-          content: content,
+          content: contentParts,
         },
       ],
-      maxTokens: 4000,
+      max_tokens: 4000,
     });
+
+    const text = response.choices[0]?.message?.content || "";
 
     // 解析 JSON 结果
     let result;
