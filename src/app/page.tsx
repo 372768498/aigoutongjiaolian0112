@@ -1,5 +1,8 @@
 "use client";
 
+import SceneSelector, { SceneType } from "@/components/SceneSelector";
+import TopicLibrary from "@/components/TopicLibrary";
+import QuickReply from "@/components/QuickReply";
 import { useState, useCallback } from "react";
 import { useDropzone } from "react-dropzone";
 import { Button } from "@/components/ui/button";
@@ -49,6 +52,9 @@ export default function ChatAnalysisApp() {
   const [images, setImages] = useState<string[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
   const [context, setContext] = useState("");
+  const [sceneType, setSceneType] = useState<SceneType | undefined>();
+  const [showTopics, setShowTopics] = useState(false);
+  const [showQuickReply, setShowQuickReply] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [result, setResult] = useState<AnalysisResult | null>(null);
@@ -112,7 +118,11 @@ export default function ChatAnalysisApp() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ images, context }),
+        body: JSON.stringify({ 
+          images, 
+          context,
+          scene_type: sceneType  // 👈 传递场景类型给 API
+        }),
       });
 
       if (!response.ok) {
@@ -138,6 +148,7 @@ export default function ChatAnalysisApp() {
     setSelectedStrategy(null);
     setError(null);
     setProgress(0);
+    // 注意：不重置 sceneType，保留用户选择
   };
 
   const getSeverityColor = (severity: string) => {
@@ -176,6 +187,74 @@ export default function ChatAnalysisApp() {
         {!result ? (
           /* 上传区域 */
           <div className="space-y-6">
+            {/* 场景选择 - 新加的功能 */}
+            <Card className="bg-slate-900/50 border-slate-800 p-6">
+              {!sceneType ? (
+                <SceneSelector onSelect={setSceneType} selected={sceneType} />
+              ) : (
+                <div>
+                  <h2 className="text-lg font-semibold text-white mb-4">
+                    🎯 当前场景
+                  </h2>
+                  <div className="flex items-center justify-between bg-slate-800/50 rounded-lg p-4 border border-slate-700">
+                    <span className="text-slate-300">
+                      场景: <span className="text-violet-400 font-semibold">
+                        {getSceneName(sceneType)}
+                      </span>
+                    </span>
+                    <button
+                      onClick={() => setSceneType(undefined)}
+                      className="text-sm text-slate-400 hover:text-slate-300 transition-colors"
+                    >
+                      更改场景
+                    </button>
+                  </div>
+                </div>
+              )}
+            </Card>
+
+            {/* 快速功能区 - 仅在选择场景后显示 */}
+            {sceneType && (
+              <Card className="bg-slate-900/50 border-slate-800 p-6">
+                <h2 className="text-lg font-semibold text-white mb-4">
+                  ⚡ 快速功能
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <button
+                    onClick={() => setShowTopics(!showTopics)}
+                    className="p-4 bg-gradient-to-br from-purple-600/20 to-blue-600/20 border border-purple-500/30 rounded-lg hover:from-purple-600/30 hover:to-blue-600/30 transition-all text-left"
+                  >
+                    <div className="text-2xl mb-2">💡</div>
+                    <div className="font-semibold text-white">话题推荐</div>
+                    <div className="text-sm text-slate-400 mt-1">
+                      200+ 精选话题，告别尬聊
+                    </div>
+                  </button>
+                  
+                  <button
+                    onClick={() => setShowQuickReply(!showQuickReply)}
+                    className="p-4 bg-gradient-to-br from-blue-600/20 to-cyan-600/20 border border-blue-500/30 rounded-lg hover:from-blue-600/30 hover:to-cyan-600/30 transition-all text-left"
+                  >
+                    <div className="text-2xl mb-2">💬</div>
+                    <div className="font-semibold text-white">快速回复</div>
+                    <div className="text-sm text-slate-400 mt-1">
+                      不知道怎么回？3-5 个选项
+                    </div>
+                  </button>
+                </div>
+              </Card>
+            )}
+
+            {/* 话题库展示 */}
+            {sceneType && showTopics && (
+              <TopicLibrary sceneType={sceneType} />
+            )}
+
+            {/* 快速回复展示 */}
+            {sceneType && showQuickReply && (
+              <QuickReply sceneType={sceneType} context={context} />
+            )}
+
             {/* 上传卡片 */}
             <Card className="bg-slate-900/50 border-slate-800 p-6">
               <h2 className="text-lg font-semibold text-white mb-4">
@@ -476,4 +555,17 @@ export default function ChatAnalysisApp() {
       </footer>
     </div>
   );
+}
+
+// 辅助函数：获取场景名称
+function getSceneName(type: SceneType): string {
+  const names: Record<SceneType, string> = {
+    long_distance: "异地恋",
+    dating: "相亲/约会",
+    relationship: "恋爱关系",
+    friendship: "朋友",
+    workplace: "职场",
+    family: "家庭"
+  };
+  return names[type];
 }

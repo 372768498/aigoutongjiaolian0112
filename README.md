@@ -1,36 +1,63 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🗣️ AI 沟通教练
 
-## Getting Started
+> 像心理咨询师一样帮你看懂对方，像沟通教练一样教你怎么说
 
-First, run the development server:
+[![Deploy with Vercel](https://vercel.com/button)](https://aigoutongjiaolian0112.vercel.app/)
+
+## ✨ 功能特点
+
+- 📸 **截图分析** - 上传聊天截图，AI 自动识别对话内容
+- 🎭 **情绪诊断** - 分析双方情绪状态和强度
+- ⚠️ **问题识别** - 找出沟通中的核心问题
+- 💡 **策略推荐** - 提供3个差异化沟通策略
+- 💬 **话术指导** - 分步话术模板 + 使用解释
+
+## 🚀 快速开始
 
 ```bash
+# 克隆项目
+git clone https://github.com/372768498/aigoutongjiaolian0112.git
+cd aigoutongjiaolian0112
+
+# 安装依赖
+npm install
+
+# 配置环境变量
+cp .env.example .env.local
+# 编辑 .env.local，填入你的 OPENAI_API_KEY
+
+# 启动开发服务器
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+打开 http://localhost:3000 查看应用
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🛠️ 技术栈
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- **框架**: Next.js 16 (App Router)
+- **语言**: TypeScript
+- **样式**: Tailwind CSS 4
+- **UI**: shadcn/ui
+- **AI**: OpenAI GPT-4o
+- **部署**: Vercel
 
-## Learn More
+## 📁 项目结构
 
-To learn more about Next.js, take a look at the following resources:
+```
+src/
+├── app/
+│   ├── api/analyze/route.ts  # AI 分析接口
+│   ├── page.tsx              # 主页面
+│   ├── layout.tsx            # 布局
+│   └── globals.css           # 全局样式
+├── components/ui/            # UI 组件
+└── lib/utils.ts              # 工具函数
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 📖 文档
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+详细项目文档请查看 [PROJECT_DOC.md](./PROJECT_DOC.md)
 
-## Deploy on Vercel
+## 📝 License
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+MIT
