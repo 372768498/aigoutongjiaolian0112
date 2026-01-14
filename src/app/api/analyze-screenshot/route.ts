@@ -87,7 +87,7 @@ export async function POST(request: Request) {
     let savedAnalysisId: string | null = null;
 
     if (userId) {
-      const { data: savedAnalysis, error: saveError } = await supabaseAdmin
+      const { data: savedAnalysis, error: saveError } = await supabaseAdmin()
         .from('screenshot_analysis')
         .insert({
           user_id: userId,
