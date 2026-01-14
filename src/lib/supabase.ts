@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 // ==========================================
 // Supabase 客户端配置
@@ -13,8 +13,15 @@ export const supabase = supabaseUrl && supabaseAnonKey
   ? createClient(supabaseUrl, supabaseAnonKey)
   : null;
 
-// 服务端客户端（API routes 使用）- 使用函数确保运行时检查
-export function getSupabaseAdmin() {
+// 缓存的 admin 客户端实例
+let _supabaseAdminInstance: SupabaseClient | null = null;
+
+// 服务端客户端（API routes 使用）- 导出 getter 函数
+export function getSupabaseAdmin(): SupabaseClient {
+  if (_supabaseAdminInstance) {
+    return _supabaseAdminInstance;
+  }
+  
   if (!supabaseUrl) {
     throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL environment variable');
   }
@@ -22,25 +29,19 @@ export function getSupabaseAdmin() {
     throw new Error('Missing SUPABASE_SERVICE_ROLE_KEY environment variable');
   }
   
-  return createClient(supabaseUrl, supabaseServiceKey, {
+  _supabaseAdminInstance = createClient(supabaseUrl, supabaseServiceKey, {
     auth: {
       autoRefreshToken: false,
       persistSession: false
     }
   });
+  
+  return _supabaseAdminInstance;
 }
 
-// 为了兼容旧代码，导出一个懒初始化的实例
-let _supabaseAdminInstance: ReturnType<typeof createClient> | null = null;
-
-export const supabaseAdmin = new Proxy({} as ReturnType<typeof createClient>, {
-  get(target, prop) {
-    if (!_supabaseAdminInstance) {
-      _supabaseAdminInstance = getSupabaseAdmin();
-    }
-    return (_supabaseAdminInstance as any)[prop];
-  }
-});
+// 为了向后兼容，导出一个同名的 getter
+// 使用时: const admin = supabaseAdmin();
+export const supabaseAdmin = getSupabaseAdmin;
 
 // ==========================================
 // 类型定义
