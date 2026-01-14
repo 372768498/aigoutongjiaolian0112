@@ -59,12 +59,12 @@ export default function RelationshipsPage() {
                 </svg>
               </Link>
               <div className="flex items-center gap-2">
-                <span className="text-2xl">💎</span>
-                <h1 className="text-xl font-bold text-white">我的关系</h1>
+                <span className="text-xl md:text-2xl">💎</span>
+                <h1 className="text-lg md:text-xl font-bold text-white">我的关系</h1>
               </div>
             </div>
             <Link href="/relationships/new">
-              <Button className="bg-purple-600 hover:bg-purple-500">
+              <Button className="bg-purple-600 hover:bg-purple-500 h-9 md:h-10 px-3 md:px-4 text-sm md:text-base">
                 + 新建
               </Button>
             </Link>
@@ -72,14 +72,14 @@ export default function RelationshipsPage() {
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-4 py-8">
+      <main className="max-w-4xl mx-auto px-4 py-6 md:py-8">
         {/* 搜索框 */}
-        <div className="mb-6">
+        <div className="mb-4 md:mb-6">
           <div className="relative">
             <input
               type="text"
               placeholder="🔍 搜索关系..."
-              className="w-full bg-slate-900/50 border border-slate-800 rounded-xl px-4 py-3 text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-slate-700"
+              className="w-full bg-slate-900/50 border border-slate-800 rounded-xl px-4 py-2.5 md:py-3 text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-slate-700 text-sm md:text-base"
             />
           </div>
         </div>
@@ -87,27 +87,27 @@ export default function RelationshipsPage() {
         {/* 关系列表 */}
         {relationships.length === 0 ? (
           /* 空状态 */
-          <div className="text-center py-16">
-            <div className="text-6xl mb-4">💔</div>
-            <h3 className="text-xl font-semibold text-white mb-2">还没有关系档案</h3>
-            <p className="text-slate-400 mb-6">创建你的第一个关系，让 AI 开始学习和成长！</p>
+          <div className="text-center py-12 md:py-16">
+            <div className="text-5xl md:text-6xl mb-4">💔</div>
+            <h3 className="text-lg md:text-xl font-semibold text-white mb-2">还没有关系档案</h3>
+            <p className="text-sm md:text-base text-slate-400 mb-6 px-4">创建你的第一个关系，让 AI 开始学习和成长！</p>
             <Link href="/relationships/new">
-              <Button className="bg-purple-600 hover:bg-purple-500">
+              <Button className="bg-purple-600 hover:bg-purple-500 h-12 px-6">
                 🎉 创建第一个关系
               </Button>
             </Link>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-3 md:space-y-4">
             {relationships.map((rel) => (
               <Link key={rel.id} href={`/relationships/${rel.id}`}>
-                <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6 hover:border-slate-700 hover:bg-slate-900/70 transition-all cursor-pointer">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                      <span className="text-4xl">{rel.emoji}</span>
+                <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-4 md:p-6 hover:border-slate-700 hover:bg-slate-900/70 transition-all cursor-pointer">
+                  <div className="flex items-start justify-between mb-3 md:mb-4">
+                    <div className="flex items-center gap-2 md:gap-3">
+                      <span className="text-3xl md:text-4xl flex-shrink-0">{rel.emoji}</span>
                       <div>
-                        <h3 className="text-xl font-bold text-white">{rel.personName}</h3>
-                        <p className="text-sm text-slate-400">
+                        <h3 className="text-lg md:text-xl font-bold text-white">{rel.personName}</h3>
+                        <p className="text-xs md:text-sm text-slate-400">
                           {rel.relationshipType === 'romantic' && '恋爱关系'}
                           {rel.relationshipType === 'workplace_boss' && '职场上级'}
                           {rel.relationshipType === 'friend' && '朋友'}
@@ -116,18 +116,18 @@ export default function RelationshipsPage() {
                         </p>
                       </div>
                     </div>
-                    <svg className="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5 md:w-6 md:h-6 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                     </svg>
                   </div>
 
                   {/* 学习进度 */}
                   <div className="mb-3">
-                    <div className="flex items-center justify-between text-sm mb-2">
+                    <div className="flex items-center justify-between text-xs md:text-sm mb-2">
                       <span className="text-slate-400">学习进度</span>
                       <span className="text-white font-semibold">{rel.learningProgress}%</span>
                     </div>
-                    <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+                    <div className="w-full h-2 md:h-2.5 bg-slate-800 rounded-full overflow-hidden">
                       <div
                         className={`h-full bg-gradient-to-r ${getProgressColor(rel.learningProgress)} transition-all`}
                         style={{ width: `${rel.learningProgress}%` }}
@@ -136,7 +136,7 @@ export default function RelationshipsPage() {
                   </div>
 
                   {/* 统计信息 */}
-                  <div className="flex items-center gap-4 text-sm text-slate-400">
+                  <div className="flex items-center gap-3 md:gap-4 text-xs md:text-sm text-slate-400">
                     <span>💬 {rel.conversationCount}次对话</span>
                     <span>🕒 最后对话: {rel.lastConversationAt}</span>
                   </div>
@@ -148,12 +148,12 @@ export default function RelationshipsPage() {
 
         {/* 底部提示 */}
         {relationships.length > 0 && (
-          <div className="mt-8 bg-purple-500/10 border border-purple-500/30 rounded-xl p-6">
-            <div className="flex items-start gap-4">
-              <span className="text-3xl">💡</span>
+          <div className="mt-6 md:mt-8 bg-purple-500/10 border border-purple-500/30 rounded-xl p-4 md:p-6">
+            <div className="flex items-start gap-3 md:gap-4">
+              <span className="text-2xl md:text-3xl flex-shrink-0">💡</span>
               <div>
-                <h3 className="font-semibold text-purple-400 mb-2">如何让 AI 更懂你？</h3>
-                <ul className="text-sm text-slate-300 space-y-1">
+                <h3 className="font-semibold text-purple-400 mb-2 text-sm md:text-base">如何让 AI 更懂你？</h3>
+                <ul className="text-xs md:text-sm text-slate-300 space-y-1">
                   <li>• 每次对话后标注效果（成功/失败）</li>
                   <li>• 定期更新你的目标和期望人设</li>
                   <li>• 使用越多，建议越精准！</li>
