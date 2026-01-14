@@ -1,7 +1,13 @@
 import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import { supabaseAdmin } from '@/lib/supabase';
-import type { ScreenshotAnalysisRequest, ScreenshotAnalysisResponse } from '@/types';
+import type { 
+  ScreenshotAnalysisRequest, 
+  ScreenshotAnalysisResponse,
+  ExtractedConversation,
+  PersonStyle,
+  RelationshipType
+} from '@/types';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -19,7 +25,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // 使用 GPT-4 Vision 分析截图
     const analysisPrompt = `
 你是一个专业的沟通分析助手。请分析这张聊天截图。
 
@@ -60,7 +65,10 @@ export async function POST(request: Request) {
         {
           role: 'user',
           content: [
-            { type: 'text', text: analysisPrompt },
+            {
+              type: 'text',
+              text: analysisPrompt,
+            },
             {
               type: 'image_url',
               image_url: {
@@ -83,7 +91,6 @@ export async function POST(request: Request) {
 
     const analysis = JSON.parse(result);
 
-    // 保存到数据库
     let savedAnalysisId: string | null = null;
 
     if (userId) {
@@ -119,8 +126,50 @@ export async function POST(request: Request) {
 
   } catch (error: any) {
     console.error('截图分析 API 错误:', error);
+    
     return NextResponse.json(
-      { error: '分析失败，请重试', details: error.message },
+      { 
+        error: '分析失败，请重试',
+        details: error.message 
+      },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PATCH(request: Request) {
+  try {
+    const body = await request.json();
+    const { analysisId, confirmed, corrections } = body;
+
+    if (!analysisId) {
+      return NextResponse.json(
+        { error: '缺少 analysisId' },
+        { status: 400 }
+      );
+    }
+
+    const { data, error } = await supabaseAdmin
+      .from('screenshot_analysis')
+      .update({
+        user_confirmed: confirmed,
+        user_corrections: corrections,
+      })
+      .eq('id', analysisId)
+      .select()
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    return NextResponse.json({ success: true, data });
+
+  } catch (error: any) {
+    console.error('更新分析结果失败:', error);
+    
+    return NextResponse.json(
+      { error: '更新失败', details: error.message },
       { status: 500 }
     );
   }
