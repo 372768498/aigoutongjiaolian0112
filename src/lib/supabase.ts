@@ -6,21 +6,23 @@ import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 
-// 构建时允许为空，运行时在 API 中检查
-function getSupabaseClient() {
-  if (!supabaseUrl || !supabaseAnonKey) {
-    throw new Error('Missing Supabase environment variables. Please configure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY');
-  }
-  return createClient(supabaseUrl, supabaseAnonKey);
-}
+// 客户端（浏览器端使用）
+export const supabase = supabaseUrl && supabaseAnonKey 
+  ? createClient(supabaseUrl, supabaseAnonKey)
+  : null;
 
-function getSupabaseAdmin() {
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!supabaseUrl || !serviceKey) {
-    throw new Error('Missing Supabase environment variables. Please configure NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY');
+// 服务端客户端（API routes 使用）- 使用函数确保运行时检查
+export function getSupabaseAdmin() {
+  if (!supabaseUrl) {
+    throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL environment variable');
   }
-  return createClient(supabaseUrl, serviceKey, {
+  if (!supabaseServiceKey) {
+    throw new Error('Missing SUPABASE_SERVICE_ROLE_KEY environment variable');
+  }
+  
+  return createClient(supabaseUrl, supabaseServiceKey, {
     auth: {
       autoRefreshToken: false,
       persistSession: false
@@ -28,25 +30,17 @@ function getSupabaseAdmin() {
   });
 }
 
-// 导出懒加载的客户端
-export const supabase = supabaseUrl && supabaseAnonKey ? createClient(supabaseUrl, supabaseAnonKey) : null;
+// 为了兼容旧代码，导出一个懒初始化的实例
+let _supabaseAdminInstance: ReturnType<typeof createClient> | null = null;
 
-// 导出函数而不是直接创建客户端（运行时检查）
-export const supabaseAdmin = supabaseUrl && process.env.SUPABASE_SERVICE_ROLE_KEY 
-  ? createClient(supabaseUrl, process.env.SUPABASE_SERVICE_ROLE_KEY, {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false
-      }
-    })
-  : null;
-
-// 确保在使用前环境变量存在
-export function ensureSupabaseConfig() {
-  if (!supabaseUrl || !supabaseAnonKey) {
-    throw new Error('Missing Supabase environment variables');
+export const supabaseAdmin = new Proxy({} as ReturnType<typeof createClient>, {
+  get(target, prop) {
+    if (!_supabaseAdminInstance) {
+      _supabaseAdminInstance = getSupabaseAdmin();
+    }
+    return (_supabaseAdminInstance as any)[prop];
   }
-}
+});
 
 // ==========================================
 // 类型定义
