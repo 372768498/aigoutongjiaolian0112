@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import { supabaseAdmin } from '@/lib/supabase';
+import { generateSmartPrompt, ConversationContext, UserProfile } from '@/lib/smart-prompt';
 import type { QuickReplyRequest, QuickReplyResponse } from '@/types';
 
 const openai = new OpenAI({
@@ -19,74 +20,106 @@ export async function POST(request: Request) {
       );
     }
 
-    // 快速模式：通用建议
-    const prompt = `
-你是一个专业的沟通教练，帮助用户快速回复消息。
+    // 构建上下文
+    const conversationContext: ConversationContext = {
+      theirMessage,
+      background: context,
+    };
 
-对方说：“${theirMessage}”
-${context ? `背景：${context}` : ''}
+    // 如果有 relationshipId，加载用户档案
+    if (relationshipId) {
+      try {
+        // 加载关系档案
+        const { data: relationship, error: relError } = await supabaseAdmin()
+          .from('relationships')
+          .select('*')
+          .eq('id', relationshipId)
+          .single();
 
-请提供 3 个回复建议。
+        if (!relError && relationship) {
+          // 构建用户档案
+          conversationContext.userProfile = {
+            name: relationship.person_name,
+            relationshipGoal: relationship.goal,
+            desiredPersona: relationship.desired_persona || [],
+            communicationStyle: relationship.communication_style || {}
+          };
 
-任务：
-1. 分析对方的情绪和意图
-2. 给出 3 个不同风格的回复选项
-3. 每个选项要实用、自然、可直接复制使用
+          // 加载成功模式（从历史对话中提取）
+          const { data: conversations } = await supabaseAdmin()
+            .from('conversations')
+            .select('used_reply_id, replies, effectiveness')
+            .eq('relationship_id', relationshipId)
+            .eq('effectiveness', 'success')
+            .order('created_at', { ascending: false })
+            .limit(5);
 
-输出 JSON 格式：
-{
-  "analysis": {
-    "emotion": "对方当前情绪",
-    "intention": "对方的意图",
-    "context": "对这次沟通的理解"
-  },
-  "suggestedStrategy": {
-    "name": "推荐策略名称",
-    "type": "active|passive|neutral",
-    "reason": "为什么用这个策略",
-    "fitsRelationship": false
-  },
-  "replies": [
-    {
-      "id": "1",
-      "content": "具体回复内容（20-50字）",
-      "strategy": "这个回复用的策略",
-      "strategyType": "active|passive|neutral",
-      "explanation": "这个回复的作用",
-      "whyThis": "为什么这样说",
-      "riskLevel": "low|medium|high",
-      "riskReason": "可能的风险",
-      "prediction": {
-        "scenario1": {"probability": 70, "response": "对方可能说..."},
-        "scenario2": {"probability": 20, "response": "对方可能说..."},
-        "scenario3": {"probability": 10, "response": "对方可能说..."}
-      },
-      "fitsGoal": false,
-      "fitsPersona": false
+          if (conversations && conversations.length > 0) {
+            conversationContext.successfulPatterns = conversations
+              .filter(c => c.used_reply_id && c.replies)
+              .map(c => {
+                const usedReply = c.replies.find((r: any) => r.id === c.used_reply_id);
+                return usedReply ? {
+                  strategy: usedReply.strategy || '未知策略',
+                  successRate: 100, // 简化计算
+                  example: usedReply.content
+                } : null;
+              })
+              .filter(Boolean)
+              .slice(0, 3); // 最多3个
+          }
+
+          // 加载失败模式
+          const { data: failedConvs } = await supabaseAdmin()
+            .from('conversations')
+            .select('used_reply_id, replies')
+            .eq('relationship_id', relationshipId)
+            .eq('effectiveness', 'failed')
+            .order('created_at', { ascending: false })
+            .limit(3);
+
+          if (failedConvs && failedConvs.length > 0) {
+            conversationContext.failedPatterns = failedConvs
+              .filter(c => c.used_reply_id && c.replies)
+              .map(c => {
+                const usedReply = c.replies.find((r: any) => r.id === c.used_reply_id);
+                return usedReply ? {
+                  strategy: usedReply.strategy || '未知策略',
+                  reason: '未达到预期效果'
+                } : null;
+              })
+              .filter(Boolean)
+              .slice(0, 2); // 最多2个
+          }
+        }
+      } catch (error) {
+        console.error('[加载档案错误]:', error);
+        // 继续使用通用模式
+      }
     }
-  ],
-  "recommendedReplyId": "1"
-}
 
-要求：
-- 回复要实用、自然
-- 3 个选项要有明显差异（积极/中立/委婉）
-- 标注清楚风险
-- 预测要具体
-`;
+    // 生成智能 Prompt
+    const smartPrompt = generateSmartPrompt(conversationContext);
 
+    console.log('[智能 Prompt] 生成成功:', {
+      hasProfile: !!conversationContext.userProfile,
+      hasSuccessPatterns: !!(conversationContext.successfulPatterns?.length),
+      hasFailedPatterns: !!(conversationContext.failedPatterns?.length),
+      promptLength: smartPrompt.length
+    });
+
+    // 调用 OpenAI API
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o',
       messages: [
         {
           role: 'system',
-          content: '你是专业的沟通教练，擅长快速给出实用的回复建议。',
-        },
-        { role: 'user', content: prompt },
+          content: smartPrompt
+        }
       ],
       response_format: { type: 'json_object' },
-      temperature: 0.7,
-      max_tokens: 2000,
+      temperature: 0.8,
+      max_tokens: 2500,
     });
 
     const result = completion.choices[0].message.content;
@@ -95,6 +128,12 @@ ${context ? `背景：${context}` : ''}
     }
 
     const response: QuickReplyResponse = JSON.parse(result);
+    
+    console.log('[智能回复] 生成成功:', {
+      repliesCount: response.replies?.length,
+      recommendedId: response.recommendedReplyId
+    });
+
     return NextResponse.json(response);
 
   } catch (error: any) {
