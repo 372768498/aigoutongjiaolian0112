@@ -36,6 +36,47 @@ export default function HomePage() {
 
         {/* Main Action Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-6 md:mb-8">
+          {/* 🆕 多 Agent 聊天界面 */}
+          <Link href="/chat">
+            <div className="group relative bg-gradient-to-br from-violet-600/20 to-fuchsia-600/20 border border-violet-500/30 rounded-2xl p-6 md:p-8 hover:from-violet-600/30 hover:to-fuchsia-600/30 transition-all cursor-pointer overflow-hidden min-h-[200px] md:min-h-0">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-violet-500/10 rounded-full blur-3xl group-hover:bg-violet-500/20 transition-all"></div>
+              
+              <div className="relative">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-4xl md:text-5xl">🤝</span>
+                  <span className="px-2 py-0.5 bg-violet-500/30 text-violet-300 text-xs rounded-full">v2.0 NEW</span>
+                </div>
+                <h3 className="text-xl md:text-2xl font-bold text-white mb-2">多 Agent 顾问团</h3>
+                <p className="text-slate-300 mb-3 md:mb-4">
+                  5位顾问协作，给你不同视角的建议
+                </p>
+                <ul className="space-y-2 text-sm text-slate-400">
+                  <li className="flex items-center gap-2">
+                    <span>🎯</span>
+                    <span>场景分析师 - 识别关系动态</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span>🤗😄😎💪</span>
+                    <span>4种风格顾问 - 多角度建议</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <svg className="w-4 h-4 text-green-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                    记住每段关系，越用越懂你
+                  </li>
+                </ul>
+                
+                <div className="mt-4 md:mt-6 flex items-center text-violet-400 font-medium group-hover:translate-x-2 transition-transform">
+                  立即体验
+                  <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </Link>
+
           {/* 快速回复 */}
           <Link href="/quick-reply">
             <div className="group relative bg-gradient-to-br from-blue-600/20 to-cyan-600/20 border border-blue-500/30 rounded-2xl p-6 md:p-8 hover:from-blue-600/30 hover:to-cyan-600/30 transition-all cursor-pointer overflow-hidden min-h-[200px] md:min-h-0">
@@ -77,49 +118,27 @@ export default function HomePage() {
               </div>
             </div>
           </Link>
+        </div>
 
-          {/* 我的关系 */}
-          <Link href="/relationships">
-            <div className="group relative bg-gradient-to-br from-purple-600/20 to-pink-600/20 border border-purple-500/30 rounded-2xl p-6 md:p-8 hover:from-purple-600/30 hover:to-pink-600/30 transition-all cursor-pointer overflow-hidden min-h-[200px] md:min-h-0">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 rounded-full blur-3xl group-hover:bg-purple-500/20 transition-all"></div>
-              
-              <div className="relative">
-                <div className="text-4xl md:text-5xl mb-3 md:mb-4">💎</div>
-                <h3 className="text-xl md:text-2xl font-bold text-white mb-2">我的关系</h3>
-                <p className="text-slate-300 mb-3 md:mb-4">
-                  专属档案，越聊越懂你
-                </p>
-                <ul className="space-y-2 text-sm text-slate-400">
-                  <li className="flex items-center gap-2">
-                    <svg className="w-4 h-4 text-green-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
-                    管理多个关系档案
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <svg className="w-4 h-4 text-green-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
-                    AI 学习对话历史
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <svg className="w-4 h-4 text-green-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
-                    85-95分质量
-                  </li>
-                </ul>
-                
-                <div className="mt-4 md:mt-6 flex items-center text-purple-400 font-medium group-hover:translate-x-2 transition-transform">
-                  查看我的关系
-                  <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
+        {/* 我的关系 */}
+        <Link href="/relationships">
+          <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 md:p-6 hover:border-slate-700 transition-all cursor-pointer mb-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3 md:gap-4">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 border border-purple-500/30 flex items-center justify-center flex-shrink-0">
+                  <span className="text-2xl">💎</span>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-white text-base md:text-lg">我的关系</h4>
+                  <p className="text-sm text-slate-400">管理多个关系档案，AI 学习对话历史</p>
                 </div>
               </div>
+              <svg className="w-5 h-5 md:w-6 md:h-6 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
             </div>
-          </Link>
-        </div>
+          </div>
+        </Link>
 
         {/* Screenshot Upload CTA */}
         <Link href="/screenshot">

@@ -1,15 +1,16 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { AgentType, AGENTS } from '@/types/chat';
+import { Agent, AgentType, AGENTS } from '@/types/chat';
 import Image from 'next/image';
 
 interface ChatInputProps {
   onSend: (message: string, images: string[], mentionedAgent?: AgentType) => void;
   isLoading: boolean;
+  agents?: Agent[];
 }
 
-export default function ChatInput({ onSend, isLoading }: ChatInputProps) {
+export default function ChatInput({ onSend, isLoading, agents }: ChatInputProps) {
   const [message, setMessage] = useState('');
   const [images, setImages] = useState<string[]>([]);
   const [showAgentPicker, setShowAgentPicker] = useState(false);
@@ -18,6 +19,10 @@ export default function ChatInput({ onSend, isLoading }: ChatInputProps) {
   
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // 使用传入的agents或默认的AGENTS
+  const allAgents = agents || Object.values(AGENTS);
+  const styleAgents = allAgents.filter(a => a.id !== 'analyzer');
 
   // 监听@输入
   useEffect(() => {
@@ -83,8 +88,6 @@ export default function ChatInput({ onSend, isLoading }: ChatInputProps) {
     }
   };
 
-  const styleAgents = Object.values(AGENTS).filter(a => a.id !== 'analyzer');
-
   return (
     <div className="border-t border-gray-800 bg-[#1a1a1a]">
       {/* Agent选择器弹出层 */}
@@ -92,7 +95,7 @@ export default function ChatInput({ onSend, isLoading }: ChatInputProps) {
         <div className="p-3 border-b border-gray-800 bg-[#262626]">
           <div className="text-sm text-gray-400 mb-2">选择顾问：</div>
           <div className="flex flex-wrap gap-2">
-            {Object.values(AGENTS).map((agent) => (
+            {allAgents.map((agent) => (
               <button
                 key={agent.id}
                 onClick={() => handleSelectAgent(agent.id)}
