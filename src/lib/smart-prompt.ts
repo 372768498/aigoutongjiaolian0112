@@ -1,17 +1,14 @@
-/**
- * 智能 Prompt 生成器
- * 基于用户档案生成高度个性化的 AI 提示词
- */
+// 智能 Prompt 生成器 - 中国式社交决策专家
 
 export interface UserProfile {
-  name?: string;
+  name: string;
   relationshipGoal?: string;
   desiredPersona?: string[];
   communicationStyle?: {
-    vocabulary?: string[];      // 常用词汇
-    sentenceLength?: "short" | "medium" | "long";
-    emojiUsage?: "frequent" | "occasional" | "rare";
-    tone?: string;              // 语气：温柔、直接、幽默等
+    vocabulary?: string[];
+    sentenceLength?: string;
+    emojiUsage?: string;
+    tone?: string;
   };
 }
 
@@ -35,382 +32,202 @@ export interface ConversationContext {
 }
 
 /**
- * 生成智能 Prompt
- * 根据用户档案和历史经验生成个性化提示词
+ * 生成智能 Prompt - 5层框架
  */
 export function generateSmartPrompt(context: ConversationContext): string {
-  const hasProfile = context.userProfile && Object.keys(context.userProfile).length > 0;
-  const hasHistory = (context.successfulPatterns && context.successfulPatterns.length > 0) ||
-                     (context.failedPatterns && context.failedPatterns.length > 0);
+  const hasProfile = !!context.userProfile;
+  
+  // 第一层：场景解码器
+  const contextPerception = `
+## 第一层：场景解码器（Context Perception）
 
-  // 如果没有档案，使用通用 Prompt
-  if (!hasProfile && !hasHistory) {
-    return generateBasicPrompt(context);
-  }
+### 当前场景分析
+**对方说的话**："${context.theirMessage}"
+${context.background ? `**背景信息**：${context.background}` : ''}
 
-  // 有档案，生成智能 Prompt
-  return generateAdvancedPrompt(context);
-}
+### 你的任务
+1. **潜台词解析**：对方这句话的真实意图是什么？表面意思 vs 潜台词。
+2. **情绪识别**：对方是生气、委屈、试探、撒娇、还是其他情绪？
+3. **社交风险评估**：
+   - 如果回复不当，可能造成什么后果？
+   - 这是一个需要"给面子"的场景吗？
+   - 对方是否在暗示某种期待或不满？
+`;
 
-/**
- * 通用 Prompt（无档案时使用）
- */
-function generateBasicPrompt(context: ConversationContext): string {
-  return `
-你是一个专业的 AI 沟通助手。你的任务是帮助用户生成得体、高情商的回复。
+  // 第二层：潜规则知识库
+  const socialSchema = `
+## 第二层：中式社交潜规则（Social Schema）
 
-# 当前对话情境
+### 核心原则
+1. **推诿艺术**：当对方说"随便"、"你看着办"时，要主动确认边界和风险
+2. **圆场策略**：永远不直接反驳，通过"第三方客观原因"作为挡箭牌
+3. **礼貌边界**：拒绝时 = 先肯定（给面子）+ 说困难（示弱）+ 给方案（留余地）
+4. **示弱技巧**：承认自己的不足往往比强硬对抗更有效
+5. **面子工程**：在正式场合，优先保护对方的面子；在私密场合，可以适当表达真实感受
 
-对方说：“${context.theirMessage}”
-${context.background ? `背景：${context.background}` : ''}
+### 话术禁区（绝对不要说）
+- ❌ "你总是..." "你从来不..." （指责性表达）
+- ❌ "随便" "无所谓" "都行" （被动攻击）
+- ❌ "我早就告诉你了" （秋后算账）
+- ❌ "你就不能...吗？" （道德绑架）
+`;
 
-# 你的任务
+  // 第三层：用户人设建模
+  const personaMirroring = hasProfile ? `
+## 第三层：你的人设（Persona Mirroring）
 
-请按以下步骤思考：
+### 关系档案
+**对方是**：${context.userProfile!.name}
+${context.userProfile!.relationshipGoal ? `**你的目标**：${context.userProfile!.relationshipGoal}` : ''}
+${context.userProfile!.desiredPersona && context.userProfile!.desiredPersona.length > 0 
+  ? `**你希望展现的特质**：${context.userProfile!.desiredPersona.join('、')}` 
+  : ''}
 
-1. **分析对方意图**
-   - 对方的情绪是什么？
-   - 对方真正想表达什么？
-   - 对方期待什么样的回应？
+### 你的说话风格
+${context.userProfile!.communicationStyle?.vocabulary && context.userProfile!.communicationStyle.vocabulary.length > 0
+  ? `**常用词汇**：${context.userProfile!.communicationStyle.vocabulary.join('、')}`
+  : ''}
+${context.userProfile!.communicationStyle?.sentenceLength
+  ? `**句子长度偏好**：${getSentenceLengthDesc(context.userProfile!.communicationStyle.sentenceLength)}`
+  : ''}
+${context.userProfile!.communicationStyle?.emojiUsage
+  ? `**Emoji使用**：${getEmojiUsageDesc(context.userProfile!.communicationStyle.emojiUsage)}`
+  : ''}
+${context.userProfile!.communicationStyle?.tone
+  ? `**整体语气**：${context.userProfile!.communicationStyle.tone}`
+  : ''}
 
-2. **生成3个不同策略的回复**
-   - 策略1：保守型（低风险，稳妥）
-   - 策略2：中性型（平衡，合适）
-   - 策略3：积极型（主动，推进关系）
+**重要**：生成的回复必须符合以上风格，不能让对方觉得"不像你说的话"。
+` : `
+## 第三层：你的人设（Persona Mirroring）
 
-3. **每个回复必须包含**
-   - 具体的回复内容（自然、真诚、不生硬）
-   - 为什么这样说（简洁解释）
-   - 风险等级（low/medium/high）
-   - 风险原因
-   - 对方可能的3种反应（概率从高到低）
+由于没有建立关系档案，请生成3种不同风格的回复：
+1. 温柔体贴风格（适合恋爱关系）
+2. 专业干练风格（适合职场关系）
+3. 轻松幽默风格（适合朋友关系）
+`;
 
-# 输出格式
+  // 第四层：历史经验
+  const experienceBase = (context.successfulPatterns || context.failedPatterns) ? `
+## 第四层：历史经验参考
 
-请以JSON格式返回，结构如下：
+${context.successfulPatterns && context.successfulPatterns.length > 0 ? `
+### ✅ 过往成功案例（学习这些策略）
+${context.successfulPatterns.map((p, i) => 
+  `${i + 1}. **${p.strategy}** - 成功率 ${p.successRate}%
+   示例："${p.example}"`
+).join('\n')}
+` : ''}
 
-\`\`\`json
-{
-  "analysis": {
-    "emotion": "对方情绪",
-    "intention": "对方意图",
-    "context": "情境分析"
-  },
-  "suggestedStrategy": {
-    "name": "推荐策略名称",
-    "type": "conservative/balanced/proactive",
-    "reason": "为什么推荐这个"
-  },
-  "replies": [
-    {
-      "id": "reply_1",
-      "content": "具体的回复内容",
-      "strategy": "策略名称",
-      "strategyType": "conservative",
-      "whyThis": "为什么这样说",
-      "riskLevel": "low",
-      "riskReason": "风险说明",
-      "prediction": {
-        "scenario1": { "probability": 70, "response": "最可能的反应" },
-        "scenario2": { "probability": 20, "response": "次可能的反应" },
-        "scenario3": { "probability": 10, "response": "低概率反应" }
-      }
-    }
-  ],
-  "recommendedReplyId": "reply_2"
-}
-\`\`\`
+${context.failedPatterns && context.failedPatterns.length > 0 ? `
+### ❌ 需要避免的做法
+${context.failedPatterns.map((p, i) => 
+  `${i + 1}. **${p.strategy}** - 失败原因：${p.reason}`
+).join('\n')}
+` : ''}
+` : '';
 
-# 重要提示
+  // 第五层：输出控制
+  const outputControl = `
+## 第五层：输出要求（去 AI 味）
 
-1. 回复内容必须自然、真诚，不要太正式或机械
-2. 考虑中国人的沟通习惯和文化背景
-3. 三个策略要有明显区别，给用户真正的选择
-4. 预测要具体、合理，不要泛泛而谈
+### 严格禁止的表达
+- ❌ 不要用："首先、其次、最后、总之"
+- ❌ 不要用："我非常理解你的感受"
+- ❌ 不要用："关于这个问题，我有以下几点建议"
+- ❌ 不要用：过于正式的书面语
+- ❌ 不要用：教科书式的长篇大论
 
-现在请开始生成！
-`.trim();
-}
+### 必须遵守的规则
+1. **自然口语化**：像微信聊天一样，简短、直接、有呼吸感
+2. **真实情感**：不要假装理解，承认困惑也是真诚的表现
+3. **分段发送**：如果回复较长，拆成2-3条短句
+4. **适度表情**：${hasProfile && context.userProfile!.communicationStyle?.emojiUsage === 'frequent' 
+    ? '多用emoji和表情包占位符如[微笑][呲牙]' 
+    : hasProfile && context.userProfile!.communicationStyle?.emojiUsage === 'rare'
+    ? '尽量不用emoji，保持简洁'
+    : '适度使用emoji，1-2个即可'}
+5. **个性化细节**：${hasProfile && context.userProfile!.communicationStyle?.vocabulary 
+    ? `自然融入这些常用词：${context.userProfile!.communicationStyle.vocabulary.join('、')}` 
+    : '根据对方的话选择合适的语气词'}
+`;
 
-/**
- * 高级 Prompt（有档案时使用）
- */
-function generateAdvancedPrompt(context: ConversationContext): string {
-  const profile = context.userProfile || {};
-  const successful = context.successfulPatterns || [];
-  const failed = context.failedPatterns || [];
+  // 最终输出格式
+  const outputFormat = `
+## 输出格式要求
 
-  return `
-你是一个高级 AI 沟通助手。你的核心使命是：**生成用户真正想说的话**。
-
-# 🎯 理解用户是谁
-
-${generateProfileSection(profile)}
-
-# 📚 历史经验告诉我们
-
-${generateHistorySection(successful, failed)}
-
-# 💬 当前对话情境
-
-对方说：“${context.theirMessage}”
-${context.background ? `背景：${context.background}` : ''}
-
-# 🧠请按以下步骤思考
-
-1. **深入理解对方**
-   - 对方的真实意图是什么？（不只是字面意思）
-   - 对方的情绪状态如何？
-   - 对方期待什么样的回应？
-
-2. **明确用户目标**
-   - 短期目标：化解当前情境
-   ${profile.relationshipGoal ? `- 长期目标：${profile.relationshipGoal}` : ''}
-
-3. **模仿用户风格**
-   ${generateStyleGuidance(profile.communicationStyle)}
-
-4. **选择最佳策略**
-   - 结合历史成功经验
-   - 避免已知的失败模式
-   - 确保符合用户人设
-
-# 📝 生成要求
-
-请生成3个回复选项，每个都要：
-
-1. **听起来就像用户自己说的**
-   ${profile.communicationStyle?.vocabulary && profile.communicationStyle.vocabulary.length > 0 
-     ? `- 使用这些词汇：${profile.communicationStyle.vocabulary.join('、')}`
-     : '- 使用自然、口语化的表达'}
-   ${profile.communicationStyle?.sentenceLength 
-     ? `- 句子长度：${profile.communicationStyle.sentenceLength === 'short' ? '短句为主' : profile.communicationStyle.sentenceLength === 'long' ? '长句为主' : '中等长度'}`
-     : ''}
-   ${profile.communicationStyle?.emojiUsage 
-     ? `- Emoji使用：${profile.communicationStyle.emojiUsage === 'frequent' ? '频繁使用' : profile.communicationStyle.emojiUsage === 'rare' ? '很少使用' : '偶尔使用'}`
-     : ''}
-   ${profile.communicationStyle?.tone 
-     ? `- 语气：${profile.communicationStyle.tone}`
-     : ''}
-
-2. **符合用户的人设目标**
-   ${profile.desiredPersona && profile.desiredPersona.length > 0
-     ? `- 要展现“${profile.desiredPersona.join('、')}”的特质`
-     : '- 要展现积极、成熟的一面'}
-   ${profile.relationshipGoal 
-     ? `- 要推进“${profile.relationshipGoal}”这个目标`
-     : ''}
-
-3. **提供不同的策略选择**
-   - 保守型：低风险，稳妥化解
-   - 中性型：平衡，既推进又不冒进
-   - 积极型：主动推进，但有一定风险
-
-4. **预测对方反应**
-   - 70%概率的最可能反应
-   - 20%概率的次可能反应
-   - 10%概率的低概率反应
-
-# 🎨 输出格式
-
-请以JSON格式返回，结构如下：
+你必须以JSON格式返回，结构如下：
 
 \`\`\`json
 {
   "analysis": {
-    "emotion": "对方情绪",
-    "intention": "对方意图",
-    "context": "情境分析"
-  },
-  "suggestedStrategy": {
-    "name": "推荐策略名称",
-    "type": "conservative/balanced/proactive",
-    "reason": "为什么推荐这个"
+    "subtext": "对方话里的潜台词分析",
+    "emotion": "对方的情绪状态",
+    "risk": "回复不当可能的风险"
   },
   "replies": [
     {
       "id": "reply_1",
-      "content": "具体的回复内容（必须符合用户风格！）",
-      "strategy": "策略名称",
-      "strategyType": "conservative",
-      "whyThis": "为什么这样说（解释给用户听）",
-      "riskLevel": "low",
-      "riskReason": "风险说明",
-      "prediction": {
-        "scenario1": { "probability": 70, "response": "最可能的具体反应" },
-        "scenario2": { "probability": 20, "response": "次可能的具体反应" },
-        "scenario3": { "probability": 10, "response": "低概率具体反应" }
-      }
+      "content": "实际回复内容（必须自然、口语化）",
+      "strategy": "策略名称（如：主动示弱、幽默化解、转移话题）",
+      "strategyType": "conservative/moderate/bold",
+      "whyThis": "为什么推荐这个回复（简短说明）",
+      "riskLevel": "low/medium/high"
     }
   ],
-  "recommendedReplyId": "reply_2"
+  "recommendedReplyId": "reply_1",
+  "tips": "额外的沟通建议（可选）"
 }
 \`\`\`
 
-# ⚠️ 重要提示
+**重要**：
+- 生成 3 个不同策略的回复
+- 按风险从低到高排序
+- content 字段必须是可以直接复制发送的话，不要有任何解释性文字
+- 每个回复要有明显的策略差异
+`;
 
-1. **回复内容必须像用户自己说的** - 这是最核心的要求！
-2. 不要生成太正式、太官方的表达
-3. 要结合历史成功经验，但不要复制原话
-4. 三个策略要有明显区别，给用户真正的选择
-5. 预测要具体、可信，基于实际人际交往逻辑
+  // 组装完整 Prompt
+  return `# Role: 高情商中式社交决策专家
 
-现在请开始生成！
-`.trim();
+你是一个深谙中国人情世故的沟通顾问。你的任务是帮助用户在复杂的社交场景中，给出既达到目的、又维护关系的精准回复建议。
+
+${contextPerception}
+
+${socialSchema}
+
+${personaMirroring}
+
+${experienceBase}
+
+${outputControl}
+
+${outputFormat}
+
+---
+
+现在，基于以上所有信息，为这段对话生成3个不同策略的回复建议。记住：
+1. 每个回复都要像用户自己说的话
+2. 必须考虑中国式社交的"面子"和"潜规则"
+3. 输出必须是有效的JSON格式
+`;
 }
 
-/**
- * 生成用户档案部分
- */
-function generateProfileSection(profile: UserProfile): string {
-  if (!profile || Object.keys(profile).length === 0) {
-    return '（当前没有用户档案信息）';
-  }
-
-  const sections: string[] = [];
-
-  if (profile.relationshipGoal) {
-    sections.push(`**关系目标**：${profile.relationshipGoal}`);
-  }
-
-  if (profile.desiredPersona && profile.desiredPersona.length > 0) {
-    sections.push(`**期望展现的人设**：${profile.desiredPersona.join('、')}`);
-  }
-
-  if (profile.communicationStyle) {
-    const style = profile.communicationStyle;
-    const styleDesc: string[] = [];
-
-    if (style.vocabulary && style.vocabulary.length > 0) {
-      styleDesc.push(`常用词汇：${style.vocabulary.join('、')}`);
-    }
-    if (style.sentenceLength) {
-      const lengthMap = {
-        short: '短句为主',
-        medium: '中等长度',
-        long: '长句为主'
-      };
-      styleDesc.push(`句子长度：${lengthMap[style.sentenceLength]}`);
-    }
-    if (style.emojiUsage) {
-      const emojiMap = {
-        frequent: '频繁使用',
-        occasional: '偶尔使用',
-        rare: '很少使用'
-      };
-      styleDesc.push(`Emoji使用：${emojiMap[style.emojiUsage]}`);
-    }
-    if (style.tone) {
-      styleDesc.push(`语气：${style.tone}`);
-    }
-
-    if (styleDesc.length > 0) {
-      sections.push(`**说话风格**：\n  - ${styleDesc.join('\n  - ')}`);
-    }
-  }
-
-  return sections.length > 0 ? sections.join('\n') : '（当前没有用户档案信息）';
+// 辅助函数
+function getSentenceLengthDesc(length: string): string {
+  const map: Record<string, string> = {
+    short: '简短直接（5-10字）',
+    medium: '适中（10-20字）',
+    long: '详细表达（20字以上）'
+  };
+  return map[length] || '适中';
 }
 
-/**
- * 生成历史经验部分
- */
-function generateHistorySection(successful: SuccessPattern[], failed: FailedPattern[]): string {
-  const sections: string[] = [];
-
-  if (successful && successful.length > 0) {
-    sections.push('**在这个关系中最有效的策略**：');
-    successful.forEach(pattern => {
-      sections.push(`\u2705 ${pattern.strategy} (成功率 ${pattern.successRate}%)`);
-      sections.push(`   案例：“${pattern.example}”`);
-    });
-    sections.push('');
-  }
-
-  if (failed && failed.length > 0) {
-    sections.push('**要避免的策略**：');
-    failed.forEach(pattern => {
-      sections.push(`\u274c ${pattern.strategy}`);
-      sections.push(`   原因：${pattern.reason}`);
-    });
-  }
-
-  if (sections.length === 0) {
-    return '（当前没有历史经验数据）';
-  }
-
-  return sections.join('\n');
+function getEmojiUsageDesc(usage: string): string {
+  const map: Record<string, string> = {
+    rare: '很少使用，正式风格',
+    occasional: '偶尔使用，自然风格',
+    frequent: '经常使用，活泼风格'
+  };
+  return map[usage] || '偶尔使用';
 }
-
-/**
- * 生成风格指导
- */
-function generateStyleGuidance(style?: UserProfile['communicationStyle']): string {
-  if (!style) {
-    return '- 使用自然、口语化的表达方式';
-  }
-
-  const guidance: string[] = [];
-
-  if (style.vocabulary && style.vocabulary.length > 0) {
-    guidance.push(`用户常用词汇：${style.vocabulary.join('、')}`);
-  }
-  if (style.sentenceLength) {
-    guidance.push(`用户喜欢${style.sentenceLength === 'short' ? '短句' : style.sentenceLength === 'long' ? '长句' : '中等长度的句子'}`);
-  }
-  if (style.emojiUsage) {
-    guidance.push(`用户${style.emojiUsage === 'frequent' ? '频繁使用' : style.emojiUsage === 'rare' ? '很少使用' : '偶尔使用'}Emoji`);
-  }
-  if (style.tone) {
-    guidance.push(`用户的语气是${style.tone}`);
-  }
-
-  return guidance.length > 0 
-    ? `- ${guidance.join('\n   - ')}`
-    : '- 使用自然、口语化的表达方式';
-}
-
-/**
- * 示例用户档案（用于测试）
- */
-export const exampleUserProfile: UserProfile = {
-  name: '小美',
-  relationshipGoal: '推进到同居阶段',
-  desiredPersona: ['独立', '温柔', '不作不闹'],
-  communicationStyle: {
-    vocabulary: ['宝贝', '呀', '哈哈', '唔唔'],
-    sentenceLength: 'short',
-    emojiUsage: 'frequent',
-    tone: '温柔'
-  }
-};
-
-/**
- * 示例成功模式（用于测试）
- */
-export const exampleSuccessPatterns: SuccessPattern[] = [
-  {
-    strategy: '撒娇式沟通',
-    successRate: 80,
-    example: '宝贝你是对哪部分有疑问呀？😊'
-  },
-  {
-    strategy: '主动澄清',
-    successRate: 75,
-    example: '我刚才表达不清楚，让你为难了~'
-  }
-];
-
-/**
- * 示例失败模式（用于测试）
- */
-export const exampleFailedPatterns: FailedPattern[] = [
-  {
-    strategy: '被动等待',
-    reason: '对方会觉得你没主见'
-  },
-  {
-    strategy: '过度强势',
-    reason: '容易引发冲突'
-  }
-];
