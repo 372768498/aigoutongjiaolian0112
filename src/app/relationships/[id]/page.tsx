@@ -47,6 +47,7 @@ export default function RelationshipDetailPage() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [aiResponse, setAiResponse] = useState<QuickReplyResponse | null>(null);
   const [showResults, setShowResults] = useState(false);
+  const [expandedNext, setExpandedNext] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -58,7 +59,6 @@ export default function RelationshipDetailPage() {
     try {
       setIsLoading(true);
       
-      // 加载关系详情
       const relResponse = await fetch(`/api/relationships/${id}`, {
         headers: { "X-User-Id": "test-user-001" }
       });
@@ -67,7 +67,6 @@ export default function RelationshipDetailPage() {
         setRelationship(relData.relationship);
       }
 
-      // 加载对话历史
       const convResponse = await fetch(`/api/relationships/${id}/conversations?limit=20`, {
         headers: { "X-User-Id": "test-user-001" }
       });
@@ -95,9 +94,7 @@ export default function RelationshipDetailPage() {
     try {
       const response = await fetch("/api/quick-reply", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           theirMessage: message,
           context: context || undefined,
@@ -183,10 +180,7 @@ export default function RelationshipDetailPage() {
                 </div>
               </div>
             </div>
-            <button
-              onClick={() => setShowProfile(!showProfile)}
-              className="text-slate-400 hover:text-slate-300"
-            >
+            <button onClick={() => setShowProfile(!showProfile)} className="text-slate-400 hover:text-slate-300">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
@@ -210,21 +204,7 @@ export default function RelationshipDetailPage() {
                 <h3 className="text-xs font-semibold text-slate-400 mb-2">期望人设</h3>
                 <div className="flex flex-wrap gap-1.5">
                   {relationship.desired_persona.map((persona, i) => (
-                    <span key={i} className="px-2 py-0.5 bg-purple-500/20 text-purple-400 rounded text-xs">
-                      {persona}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-            {relationship.communication_style?.vocabulary && relationship.communication_style.vocabulary.length > 0 && (
-              <div>
-                <h3 className="text-xs font-semibold text-slate-400 mb-2">常用词汇</h3>
-                <div className="flex flex-wrap gap-1.5">
-                  {relationship.communication_style.vocabulary.map((word, i) => (
-                    <span key={i} className="px-2 py-0.5 bg-blue-500/20 text-blue-400 rounded text-xs">
-                      {word}
-                    </span>
+                    <span key={i} className="px-2 py-0.5 bg-purple-500/20 text-purple-400 rounded text-xs">{persona}</span>
                   ))}
                 </div>
               </div>
@@ -233,14 +213,9 @@ export default function RelationshipDetailPage() {
               <h3 className="text-xs font-semibold text-slate-400 mb-2">学习进度</h3>
               <div className="flex items-center gap-3">
                 <div className="flex-1 h-2 bg-slate-800 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-gradient-to-r from-purple-500 to-blue-500"
-                    style={{ width: `${relationship.learning_progress}%` }}
-                  />
+                  <div className="h-full bg-gradient-to-r from-purple-500 to-blue-500" style={{ width: `${relationship.learning_progress}%` }} />
                 </div>
-                <span className="text-sm text-white font-semibold">
-                  {relationship.learning_progress}%
-                </span>
+                <span className="text-sm text-white font-semibold">{relationship.learning_progress}%</span>
               </div>
             </div>
           </div>
@@ -250,10 +225,25 @@ export default function RelationshipDetailPage() {
       {/* AI 建议结果 */}
       {showResults && aiResponse && (
         <div className="max-w-4xl mx-auto px-4 py-4 space-y-4">
-          {/* 分析 */}
+          {/* 场景识别 */}
+          {aiResponse.sceneAnalysis && (
+            <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-4">
+              <h3 className="text-sm font-semibold text-slate-300 mb-2">🎯 场景识别</h3>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                {aiResponse.sceneAnalysis.matchedScenario && (
+                  <div className="text-slate-400">匹配场景：<span className="text-purple-400">{aiResponse.sceneAnalysis.matchedScenario}</span></div>
+                )}
+                {aiResponse.sceneAnalysis.relationshipType && (
+                  <div className="text-slate-400">关系类型：<span className="text-slate-300">{aiResponse.sceneAnalysis.relationshipType}</span></div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* 情况分析 */}
           {aiResponse.analysis && (
             <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4">
-              <h3 className="text-sm font-semibold text-blue-400 mb-2">🧠 场景分析</h3>
+              <h3 className="text-sm font-semibold text-blue-400 mb-2">🧠 情况分析</h3>
               <div className="space-y-2 text-sm">
                 {aiResponse.analysis.subtext && (
                   <p className="text-slate-300"><span className="text-slate-400">潜台词：</span>{aiResponse.analysis.subtext}</p>
@@ -268,46 +258,110 @@ export default function RelationshipDetailPage() {
             </div>
           )}
 
-          {/* 回复选项 */}
-          <div className="space-y-3">
-            {aiResponse.replies?.map((reply, index) => (
-              <div
-                key={reply.id}
-                className={`border rounded-xl p-4 ${
-                  reply.id === aiResponse.recommendedReplyId
-                    ? 'bg-purple-500/10 border-purple-500/50'
-                    : 'bg-slate-900/50 border-slate-800'
-                }`}
-              >
-                <div className="flex items-start justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg font-semibold text-white">策略 {index + 1}</span>
-                    {reply.id === aiResponse.recommendedReplyId && (
-                      <span className="px-2 py-0.5 bg-purple-600 text-white text-xs rounded">推荐</span>
-                    )}
-                  </div>
-                  <span className={`px-2 py-0.5 text-xs rounded ${getRiskColor(reply.riskLevel)}`}>
-                    {getRiskLabel(reply.riskLevel)}
-                  </span>
+          {/* 推荐方案 */}
+          {aiResponse.recommendedReply && (
+            <div className="bg-purple-500/10 border-2 border-purple-500/50 rounded-xl p-4">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-lg font-semibold text-white">⭐ 最佳方案</span>
+                  <span className="px-2 py-0.5 bg-purple-600 text-white text-xs rounded">推荐</span>
                 </div>
-
-                <p className="text-base text-white mb-3 leading-relaxed">{reply.content}</p>
-
-                <div className="flex items-center justify-between">
-                  <div className="text-xs text-slate-400">
-                    <span className="font-semibold">{reply.strategy}</span> · {reply.whyThis}
-                  </div>
-                  <Button
-                    size="sm"
-                    onClick={() => copyToClipboard(reply.content)}
-                    className="bg-slate-700 hover:bg-slate-600 text-white h-8"
-                  >
-                    复制
-                  </Button>
-                </div>
+                <span className={`px-2 py-0.5 text-xs rounded ${getRiskColor(aiResponse.recommendedReply.riskLevel)}`}>
+                  {getRiskLabel(aiResponse.recommendedReply.riskLevel)}
+                </span>
               </div>
-            ))}
-          </div>
+
+              <p className="text-base text-white mb-3 leading-relaxed bg-slate-900/50 p-3 rounded-lg">
+                {aiResponse.recommendedReply.content}
+              </p>
+
+              <div className="text-xs text-slate-400 mb-3">
+                <span className="font-semibold text-purple-400">{aiResponse.recommendedReply.strategy}</span> · {aiResponse.recommendedReply.whyThis}
+              </div>
+
+              {/* 安全分析 */}
+              {aiResponse.recommendedReply.safetyAnalysis && (
+                <div className="bg-slate-900/50 rounded-lg p-3 space-y-2 text-xs mb-3">
+                  <div className="text-green-400">✅ 最好情况：{aiResponse.recommendedReply.safetyAnalysis.bestCase}</div>
+                  <div className="text-yellow-400">⚠️ 最坏情况：{aiResponse.recommendedReply.safetyAnalysis.worstCase}</div>
+                  <div className="text-blue-400">🔧 补救方案：{aiResponse.recommendedReply.safetyAnalysis.ifWorstHappens}</div>
+                </div>
+              )}
+
+              {/* 对话预判 */}
+              {aiResponse.recommendedReply.nextPossible && aiResponse.recommendedReply.nextPossible.length > 0 && (
+                <div className="border-t border-slate-700 pt-3">
+                  <button
+                    onClick={() => setExpandedNext(!expandedNext)}
+                    className="w-full flex items-center justify-between text-sm text-slate-300 hover:text-white"
+                  >
+                    <span>🔮 对方可能怎么回？</span>
+                    <svg className={`w-4 h-4 transition-transform ${expandedNext ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  {expandedNext && (
+                    <div className="mt-3 space-y-3">
+                      {aiResponse.recommendedReply.nextPossible.map((next, i) => (
+                        <div key={i} className="bg-slate-900/50 rounded-lg p-3 space-y-2 text-xs">
+                          <div className="text-slate-300">💬 Ta可能说："{next.theirResponse}"</div>
+                          <div className="text-slate-400">🤔 含义：{next.meaning}</div>
+                          <div className="text-purple-300">💡 你该接："{next.yourReply}"</div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <div className="flex gap-2 mt-3">
+                <Button onClick={() => copyToClipboard(aiResponse.recommendedReply.content)} className="flex-1 bg-purple-600 hover:bg-purple-500">
+                  复制这条
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* 备选方案 */}
+          {aiResponse.alternativeReplies && aiResponse.alternativeReplies.length > 0 && (
+            <div className="space-y-3">
+              <h3 className="text-sm font-semibold text-slate-300">💼 其他选项</h3>
+              {aiResponse.alternativeReplies.map((reply, index) => (
+                <div key={reply.id} className="bg-slate-900/50 border border-slate-800 rounded-xl p-4">
+                  <div className="flex items-start justify-between mb-2">
+                    <span className="text-base font-semibold text-white">方案 {index + 2}</span>
+                    <span className={`px-2 py-0.5 text-xs rounded ${getRiskColor(reply.riskLevel)}`}>
+                      {getRiskLabel(reply.riskLevel)}
+                    </span>
+                  </div>
+                  <p className="text-base text-white mb-3 leading-relaxed">{reply.content}</p>
+                  <div className="flex items-center justify-between">
+                    <div className="text-xs text-slate-400">
+                      <span className="font-semibold">{reply.strategy}</span> · {reply.whyThis}
+                    </div>
+                    <Button size="sm" onClick={() => copyToClipboard(reply.content)} className="bg-slate-700 hover:bg-slate-600 h-8">
+                      复制
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* 避坑指南 */}
+          {aiResponse.avoidSaying && aiResponse.avoidSaying.length > 0 && (
+            <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4">
+              <h3 className="text-sm font-semibold text-red-400 mb-3">❌ 千万别说</h3>
+              <div className="space-y-2">
+                {aiResponse.avoidSaying.map((avoid, i) => (
+                  <div key={i} className="bg-slate-900/50 rounded-lg p-3">
+                    <p className="text-sm text-slate-300 mb-1">"{avoid.content}"</p>
+                    <p className="text-xs text-slate-400">原因：{avoid.reason}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* 额外提示 */}
           {aiResponse.tips && (
@@ -346,22 +400,7 @@ export default function RelationshipDetailPage() {
                       )}
                     </div>
                     <p className="text-white">{conv.their_message}</p>
-                    {conv.context && (
-                      <p className="text-sm text-slate-400 mt-1">背景：{conv.context}</p>
-                    )}
                   </div>
-                  {conv.used_reply_id && conv.replies.length > 0 && (
-                    <div className="pl-4 border-l-2 border-purple-500/30">
-                      {conv.replies
-                        .filter((r: any) => r.id === conv.used_reply_id)
-                        .map((reply: any) => (
-                          <div key={reply.id}>
-                            <p className="text-sm text-slate-400 mb-1">我说：</p>
-                            <p className="text-white">{reply.content}</p>
-                          </div>
-                        ))}
-                    </div>
-                  )}
                   <p className="text-xs text-slate-500 mt-3">
                     {new Date(conv.created_at).toLocaleString('zh-CN')}
                   </p>
