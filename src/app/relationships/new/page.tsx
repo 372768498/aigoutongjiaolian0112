@@ -41,6 +41,7 @@ export default function NewRelationshipPage() {
   // Form data
   const [personName, setPersonName] = useState("");
   const [relationshipType, setRelationshipType] = useState("");
+  const [selectedEmoji, setSelectedEmoji] = useState("");
   const [goal, setGoal] = useState("");
   const [desiredPersona, setDesiredPersona] = useState<string[]>([]);
   const [vocabulary, setVocabulary] = useState<string[]>([]);
@@ -81,18 +82,50 @@ export default function NewRelationshipPage() {
 
     setIsSubmitting(true);
     try {
-      // TODO: 调用 API 创建关系
-      // const response = await fetch("/api/relationships", {...});
-      
-      // 模拟成功
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const response = await fetch("/api/relationships", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-User-Id": "test-user-001"
+        },
+        body: JSON.stringify({
+          personName,
+          relationshipType,
+          emoji: selectedEmoji,
+          goal: goal || null,
+          desiredPersona: desiredPersona.length > 0 ? desiredPersona : null,
+          communicationStyle: vocabulary.length > 0 || tone ? {
+            vocabulary: vocabulary.length > 0 ? vocabulary : undefined,
+            sentenceLength,
+            emojiUsage,
+            tone: tone || undefined
+          } : {}
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "创建失败");
+      }
+
+      const data = await response.json();
       
       // 跳转到关系详情页
-      router.push("/relationships/new-relationship-id");
-    } catch (error) {
-      alert("创建失败，请重试");
+      router.push(`/relationships/${data.relationship.id}`);
+    } catch (error: any) {
+      console.error("[创建关系错误]:", error);
+      alert(error.message || "创建失败，请重试");
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  // 当选择关系类型时，自动设置 emoji
+  const handleTypeSelect = (type: string) => {
+    setRelationshipType(type);
+    const selected = RELATIONSHIP_TYPES.find(t => t.value === type);
+    if (selected) {
+      setSelectedEmoji(selected.emoji);
     }
   };
 
@@ -177,7 +210,7 @@ export default function NewRelationshipPage() {
                     {RELATIONSHIP_TYPES.map((type) => (
                       <button
                         key={type.value}
-                        onClick={() => setRelationshipType(type.value)}
+                        onClick={() => handleTypeSelect(type.value)}
                         className={`p-3 rounded-lg border-2 transition-all text-left ${
                           relationshipType === type.value
                             ? "border-purple-500 bg-purple-500/20"
