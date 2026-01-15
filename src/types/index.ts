@@ -90,3 +90,35 @@ export interface QuickReplyResponse {
   replies?: any[];
   recommendedReplyId?: string;
 }
+
+// ==========================================
+// 截图分析
+// ==========================================
+export interface ScreenshotAnalysisRequest {
+  imageBase64: string;
+  userId?: string;
+}
+
+export interface ExtractedMessage {
+  speaker: 'user' | 'other';
+  content: string;
+}
+
+export interface ExtractedConversation {
+  messages: ExtractedMessage[];
+  context?: string;
+}
+
+export interface PersonStyle {
+  communicationStyle?: 'concise' | 'detailed' | 'emotional' | 'casual' | 'formal';
+  characteristics?: string[];
+  notes?: string;
+}
+
+export interface ScreenshotAnalysisResponse {
+  id: string;
+  extractedConversation: ExtractedConversation;
+  relationshipGuess: string;
+  personStyle: PersonStyle;
+  confidence: number;
+}
