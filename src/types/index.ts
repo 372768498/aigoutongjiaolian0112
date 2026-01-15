@@ -1,11 +1,12 @@
 // ==========================================
 // AI 沟通教练 - TypeScript 类型定义
-// MVP 1.0 版本
+// v2.0 - 场景决策引擎
 // ==========================================
 
 // 关系类型
 export type RelationshipType = 
   | 'romantic'
+  | 'dating'
   | 'workplace_boss'
   | 'workplace_colleague'
   | 'family'
@@ -17,60 +18,75 @@ export type Effect = 'success' | 'neutral' | 'failure' | 'unknown';
 // 风险等级
 export type RiskLevel = 'low' | 'medium' | 'high';
 
-// 订阅层级
-export type SubscriptionTier = 'free' | 'premium';
+// 策略类型
+export type StrategyType = 'conservative' | 'moderate' | 'bold';
 
 // ==========================================
-// 截图分析
-// ==========================================
-export interface ScreenshotAnalysisRequest {
-  imageBase64: string;
-  userId?: string;
-}
-
-export interface ExtractedConversation {
-  messages: Array<{
-    speaker: 'user' | 'other';
-    content: string;
-    timestamp?: string;
-  }>;
-  context?: string;
-}
-
-export interface ScreenshotAnalysisResponse {
-  id: string;
-  extractedConversation: ExtractedConversation;
-  relationshipGuess: RelationshipType | 'unknown';
-  personStyle: any;
-  confidence: number;
-}
-
-// ==========================================
-// 快速回复
+// 快速回复 v2.0
 // ==========================================
 export interface QuickReplyRequest {
   theirMessage: string;
   context?: string;
   relationshipId?: string;
-  screenshotAnalysisId?: string;
 }
 
-export interface Reply {
+export interface SceneAnalysis {
+  matchedScenario?: string;
+  relationshipType?: string;
+  scenarioType?: string;
+  urgency?: string;
+}
+
+export interface SafetyAnalysis {
+  bestCase: string;
+  worstCase: string;
+  ifWorstHappens: string;
+}
+
+export interface NextPossibleResponse {
+  theirResponse: string;
+  meaning: string;
+  yourReply: string;
+}
+
+export interface RecommendedReply {
   id: string;
   content: string;
   strategy: string;
-  strategyType: string;
+  strategyType: StrategyType;
+  whyThis: string;
+  riskLevel: RiskLevel;
+  safetyAnalysis: SafetyAnalysis;
+  nextPossible: NextPossibleResponse[];
+}
+
+export interface AlternativeReply {
+  id: string;
+  content: string;
+  strategy: string;
+  strategyType: StrategyType;
   whyThis: string;
   riskLevel: RiskLevel;
 }
 
+export interface AvoidSaying {
+  content: string;
+  reason: string;
+}
+
 export interface QuickReplyResponse {
+  sceneAnalysis?: SceneAnalysis;
   analysis?: {
     subtext?: string;
     emotion?: string;
     risk?: string;
   };
-  replies: Reply[];
-  recommendedReplyId: string;
+  recommendedReply: RecommendedReply;
+  alternativeReplies?: AlternativeReply[];
+  avoidSaying?: AvoidSaying[];
   tips?: string;
+  
+  // 为了兼容旧版本
+  replies?: any[];
+  recommendedReplyId?: string;
 }
