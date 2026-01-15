@@ -1,150 +1,126 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
+import { useState, useEffect, use } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 
-interface Reply {
+interface Relationship {
   id: string;
-  content: string;
-  strategy: string;
-  whyThis: string;
-  riskLevel: string;
+  person_name: string;
+  relationship_type: string;
+  emoji: string;
+  goal?: string;
+  desired_persona?: string[];
+  communication_style?: {
+    vocabulary?: string[];
+    sentenceLength?: string;
+    emojiUsage?: string;
+    tone?: string;
+  };
+  learning_progress: number;
+  conversation_count: number;
 }
 
 interface Conversation {
   id: string;
-  theirMessage: string;
-  replies: Reply[];
-  usedReplyId?: string;
-  effectiveness?: "success" | "failed" | "neutral";
-  createdAt: string;
+  their_message: string;
+  context?: string;
+  replies: any[];
+  used_reply_id?: string;
+  effectiveness?: string;
+  created_at: string;
 }
 
-interface Relationship {
-  id: string;
-  personName: string;
-  relationshipType: string;
-  goal?: string;
-  desiredPersona?: string[];
-  learningProgress: number;
-  conversationCount: number;
-  emoji: string;
+interface PageProps {
+  params: Promise<{ id: string }>;
 }
 
-export default function RelationshipDetailPage() {
-  const params = useParams();
-  const relationshipId = params?.id as string;
+export default function RelationshipDetailPage({ params }: PageProps) {
+  const { id } = use(params);
+  const [relationship, setRelationship] = useState<Relationship | null>(null);
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [showProfile, setShowProfile] = useState(false);
+  const [message, setMessage] = useState("");
+  const [context, setContext] = useState("");
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
 
-  // 示例数据（后续从 API 加载）
-  const [relationship] = useState<Relationship>({
-    id: relationshipId,
-    personName: "男友",
-    relationshipType: "romantic",
-    goal: "推进到同居阶段",
-    desiredPersona: ["独立", "温柔", "不作"],
-    learningProgress: 75,
-    conversationCount: 12,
-    emoji: "💑"
-  });
+  useEffect(() => {
+    loadData();
+  }, [id]);
 
-  // 示例对话历史
-  const [conversations] = useState<Conversation[]>([
-    {
-      id: "1",
-      theirMessage: "随便你",
-      replies: [
-        {
-          id: "r1",
-          content: "宝贝你是对哪部分有疑问呀？",
-          strategy: "主动澄清",
-          whyThis: "符合你的温柔人设",
-          riskLevel: "low"
-        }
-      ],
-      usedReplyId: "r1",
-      effectiveness: "success",
-      createdAt: "2小时前"
-    },
-    {
-      id: "2",
-      theirMessage: "今天好累",
-      replies: [
-        {
-          id: "r2",
-          content: "宝贝辛苦了！要不要我给你按按肩呀？😊",
-          strategy: "撒娇式关心",
-          whyThis: "用撒娇表达关心",
-          riskLevel: "low"
-        }
-      ],
-      usedReplyId: "r2",
-      effectiveness: "success",
-      createdAt: "昨天"
-    }
-  ]);
-
-  const [showProfile, setShowProfile] = useState(true);
-  const [newMessage, setNewMessage] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [currentReplies, setCurrentReplies] = useState<Reply[] | null>(null);
-  const [copiedId, setCopiedId] = useState<string | null>(null);
-
-  const getProgressColor = (progress: number) => {
-    if (progress >= 80) return "from-green-500 to-emerald-500";
-    if (progress >= 60) return "from-blue-500 to-cyan-500";
-    if (progress >= 40) return "from-yellow-500 to-orange-500";
-    return "from-red-500 to-pink-500";
-  };
-
-  const handleGetAdvice = async () => {
-    if (!newMessage.trim()) return;
-
-    setIsLoading(true);
+  const loadData = async () => {
     try {
-      const response = await fetch("/api/quick-reply", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          theirMessage: newMessage,
-          relationshipId: relationshipId
-        }),
+      setIsLoading(true);
+      
+      // 加载关系详情
+      const relResponse = await fetch(`/api/relationships/${id}`, {
+        headers: { "X-User-Id": "test-user-001" }
       });
+      if (relResponse.ok) {
+        const relData = await relResponse.json();
+        setRelationship(relData.relationship);
+      }
 
-      if (!response.ok) throw new Error("获取建议失败");
-
-      const data = await response.json();
-      setCurrentReplies(data.replies || []);
+      // 加载对话历史
+      const convResponse = await fetch(`/api/relationships/${id}/conversations?limit=20`, {
+        headers: { "X-User-Id": "test-user-001" }
+      });
+      if (convResponse.ok) {
+        const convData = await convResponse.json();
+        setConversations(convData.conversations || []);
+      }
     } catch (error) {
-      alert("获取建议失败，请重试");
+      console.error("加载失败:", error);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const copyToClipboard = async (reply: Reply) => {
+  const handleGetAdvice = async () => {
+    if (!message.trim()) {
+      alert("请输入对方说的话");
+      return;
+    }
+
+    setIsAnalyzing(true);
     try {
-      await navigator.clipboard.writeText(reply.content);
-      setCopiedId(reply.id);
-      setTimeout(() => setCopiedId(null), 2000);
-    } catch (err) {
-      alert("复制失败");
+      // TODO: 调用快速回复 API
+      alert("功能开发中...");
+    } catch (error) {
+      console.error("分析失败:", error);
+    } finally {
+      setIsAnalyzing(false);
     }
   };
 
-  const getRiskColor = (level: string) => {
-    switch (level) {
-      case "low": return "text-green-400";
-      case "medium": return "text-yellow-400";
-      case "high": return "text-red-400";
-      default: return "text-slate-400";
-    }
-  };
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-purple-500/30 border-t-purple-500 rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-slate-400">加载中...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!relationship) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-slate-400 mb-4">关系不存在</p>
+          <Link href="/relationships">
+            <Button>返回列表</Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 pb-24">
       {/* Header */}
       <header className="border-b border-slate-800 bg-slate-950/50 backdrop-blur-sm sticky top-0 z-50">
         <div className="max-w-4xl mx-auto px-4 py-4">
@@ -156,177 +132,123 @@ export default function RelationshipDetailPage() {
                 </svg>
               </Link>
               <div className="flex items-center gap-2">
-                <span className="text-2xl md:text-3xl">{relationship.emoji}</span>
-                <h1 className="text-lg md:text-xl font-bold text-white">{relationship.personName}</h1>
+                <span className="text-2xl">{relationship.emoji}</span>
+                <div>
+                  <h1 className="text-lg font-bold text-white">{relationship.person_name}</h1>
+                  <p className="text-xs text-slate-400">{relationship.conversation_count} 次对话</p>
+                </div>
               </div>
             </div>
-            <button className="text-slate-400 hover:text-slate-300">
+            <button
+              onClick={() => setShowProfile(!showProfile)}
+              className="text-slate-400 hover:text-slate-300"
+            >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </button>
           </div>
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-4 py-6 md:py-8 pb-32">
-        {/* 档案信息 */}
-        <div className="bg-slate-900/50 border border-slate-800 rounded-xl mb-4 md:mb-6 overflow-hidden">
-          <button
-            onClick={() => setShowProfile(!showProfile)}
-            className="w-full p-4 flex items-center justify-between text-left hover:bg-slate-800/30 transition-colors"
-          >
-            <div className="flex items-center gap-2">
-              <span className="text-lg">📋</span>
-              <span className="font-semibold text-white text-sm md:text-base">档案信息</span>
-            </div>
-            <svg
-              className={`w-5 h-5 text-slate-400 transition-transform ${
-                showProfile ? "rotate-180" : ""
-              }`}
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-            </svg>
-          </button>
-
-          {showProfile && (
-            <div className="p-4 pt-0 space-y-3 text-sm">
+      {/* 档案信息（可折叠） */}
+      {showProfile && (
+        <div className="max-w-4xl mx-auto px-4 py-4">
+          <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-4 space-y-4">
+            {relationship.goal && (
               <div>
-                <p className="text-slate-400 mb-1">关系类型</p>
-                <p className="text-white">
-                  {relationship.relationshipType === 'romantic' && '恋爱关系'}
-                  {relationship.relationshipType === 'workplace_boss' && '职场上级'}
-                  {relationship.relationshipType === 'friend' && '朋友'}
-                </p>
+                <h3 className="text-xs font-semibold text-slate-400 mb-1">目标</h3>
+                <p className="text-sm text-white">{relationship.goal}</p>
               </div>
-
-              {relationship.goal && (
-                <div>
-                  <p className="text-slate-400 mb-1">我的目标</p>
-                  <p className="text-white">{relationship.goal}</p>
-                </div>
-              )}
-
-              {relationship.desiredPersona && relationship.desiredPersona.length > 0 && (
-                <div>
-                  <p className="text-slate-400 mb-1">期望人设</p>
-                  <div className="flex flex-wrap gap-2">
-                    {relationship.desiredPersona.map((persona, i) => (
-                      <span key={i} className="px-2 py-1 bg-purple-500/20 text-purple-400 rounded text-xs">
-                        {persona}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-
+            )}
+            {relationship.desired_persona && relationship.desired_persona.length > 0 && (
               <div>
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-slate-400">学习进度</p>
-                  <p className="text-white font-semibold">{relationship.learningProgress}%</p>
+                <h3 className="text-xs font-semibold text-slate-400 mb-2">期望人设</h3>
+                <div className="flex flex-wrap gap-1.5">
+                  {relationship.desired_persona.map((persona, i) => (
+                    <span key={i} className="px-2 py-0.5 bg-purple-500/20 text-purple-400 rounded text-xs">
+                      {persona}
+                    </span>
+                  ))}
                 </div>
-                <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+              </div>
+            )}
+            {relationship.communication_style?.vocabulary && relationship.communication_style.vocabulary.length > 0 && (
+              <div>
+                <h3 className="text-xs font-semibold text-slate-400 mb-2">常用词汇</h3>
+                <div className="flex flex-wrap gap-1.5">
+                  {relationship.communication_style.vocabulary.map((word, i) => (
+                    <span key={i} className="px-2 py-0.5 bg-blue-500/20 text-blue-400 rounded text-xs">
+                      {word}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+            <div>
+              <h3 className="text-xs font-semibold text-slate-400 mb-2">学习进度</h3>
+              <div className="flex items-center gap-3">
+                <div className="flex-1 h-2 bg-slate-800 rounded-full overflow-hidden">
                   <div
-                    className={`h-full bg-gradient-to-r ${getProgressColor(relationship.learningProgress)} transition-all`}
-                    style={{ width: `${relationship.learningProgress}%` }}
+                    className="h-full bg-gradient-to-r from-purple-500 to-blue-500"
+                    style={{ width: `${relationship.learning_progress}%` }}
                   />
                 </div>
-                <p className="text-xs text-slate-500 mt-1">
-                  已对话 {relationship.conversationCount} 次，AI 越来越懂你
-                </p>
-              </div>
-
-              <div className="pt-2 border-t border-slate-800">
-                <p className="text-slate-400 mb-2 text-xs">AI 学到的：</p>
-                <ul className="space-y-1 text-xs text-slate-300">
-                  <li>• 对方喜欢直接表达</li>
-                  <li>• 撒娇策略有效（80%成功率）</li>
-                  <li>• 避免被动语气</li>
-                </ul>
+                <span className="text-sm text-white font-semibold">
+                  {relationship.learning_progress}%
+                </span>
               </div>
             </div>
-          )}
-        </div>
-
-        {/* 对话历史 */}
-        <div className="mb-4">
-          <h2 className="text-sm font-semibold text-slate-400 mb-3 px-1">💬 对话历史</h2>
-          <div className="space-y-4">
-            {conversations.map((conv) => (
-              <div key={conv.id} className="space-y-2">
-                <p className="text-xs text-slate-500 text-center">{conv.createdAt}</p>
-                
-                {/* 对方消息 */}
-                <div className="flex justify-start">
-                  <div className="bg-slate-800/50 rounded-2xl rounded-tl-sm px-4 py-2.5 max-w-[80%]">
-                    <p className="text-slate-200 text-sm">{conv.theirMessage}</p>
-                  </div>
-                </div>
-
-                {/* AI 建议 */}
-                {conv.usedReplyId && (
-                  <div className="flex justify-end">
-                    <div className="bg-gradient-to-br from-purple-600/20 to-blue-600/20 border border-purple-500/30 rounded-2xl rounded-tr-sm px-4 py-2.5 max-w-[80%]">
-                      <div className="flex items-start gap-2 mb-1">
-                        <span className="text-xs">💡</span>
-                        <p className="text-xs text-purple-400">
-                          AI建议：{conv.replies.find(r => r.id === conv.usedReplyId)?.strategy}
-                        </p>
-                      </div>
-                      <p className="text-slate-200 text-sm">
-                        {conv.replies.find(r => r.id === conv.usedReplyId)?.content}
-                      </p>
-                      {conv.effectiveness && (
-                        <div className="mt-2 pt-2 border-t border-purple-500/20">
-                          <span className={`text-xs ${
-                            conv.effectiveness === 'success' ? 'text-green-400' :
-                            conv.effectiveness === 'failed' ? 'text-red-400' :
-                            'text-slate-400'
-                          }`}>
-                            {conv.effectiveness === 'success' && '✅ 效果好'}
-                            {conv.effectiveness === 'failed' && '❌ 效果不好'}
-                            {conv.effectiveness === 'neutral' && '⏸️ 一般'}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-            ))}
           </div>
         </div>
+      )}
 
-        {/* 当前建议 */}
-        {currentReplies && currentReplies.length > 0 && (
-          <div className="mb-4 space-y-3">
-            <h3 className="text-sm font-semibold text-white px-1">💡 AI 建议</h3>
-            {currentReplies.map((reply, index) => (
-              <div
-                key={reply.id}
-                className="bg-slate-900/50 border border-slate-800 rounded-xl p-4"
-              >
-                <div className="flex items-start justify-between mb-2">
-                  <span className="text-sm font-semibold text-white">建议 {index + 1}</span>
-                  <button
-                    onClick={() => copyToClipboard(reply)}
-                    className="px-3 py-1 bg-blue-600 hover:bg-blue-500 text-white rounded text-xs"
-                  >
-                    {copiedId === reply.id ? "✓ 已复制" : "📋 复制"}
-                  </button>
+      {/* 对话历史 */}
+      <main className="max-w-4xl mx-auto px-4 py-4">
+        {conversations.length === 0 ? (
+          <div className="text-center py-12">
+            <div className="text-5xl mb-4">💬</div>
+            <p className="text-slate-400 mb-2">还没有对话历史</p>
+            <p className="text-sm text-slate-500">在下方输入对方说的话，获取沟通建议</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {conversations.map((conv) => (
+              <div key={conv.id} className="bg-slate-900/50 border border-slate-800 rounded-xl p-4">
+                <div className="mb-3">
+                  <div className="flex items-start gap-2 mb-1">
+                    <span className="text-slate-400 text-xs">Ta说：</span>
+                    {conv.effectiveness && (
+                      <span className={`text-xs px-1.5 py-0.5 rounded ${
+                        conv.effectiveness === 'success' ? 'bg-green-500/20 text-green-400' :
+                        conv.effectiveness === 'failed' ? 'bg-red-500/20 text-red-400' :
+                        'bg-slate-500/20 text-slate-400'
+                      }`}>
+                        {conv.effectiveness === 'success' ? '✓ 有效' :
+                         conv.effectiveness === 'failed' ? '✗ 无效' : '中性'}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-white">{conv.their_message}</p>
+                  {conv.context && (
+                    <p className="text-sm text-slate-400 mt-1">背景：{conv.context}</p>
+                  )}
                 </div>
-                <div className="bg-slate-800/50 rounded-lg p-3 mb-2">
-                  <p className="text-slate-200">{reply.content}</p>
-                </div>
-                <div className="space-y-1 text-xs">
-                  <p className="text-slate-400">🎯 {reply.whyThis}</p>
-                  <p className={getRiskColor(reply.riskLevel)}>
-                    ⚠️ 风险：{reply.riskLevel === 'low' ? '低' : reply.riskLevel === 'medium' ? '中' : '高'}
-                  </p>
-                </div>
+                {conv.used_reply_id && conv.replies.length > 0 && (
+                  <div className="pl-4 border-l-2 border-purple-500/30">
+                    {conv.replies
+                      .filter((r: any) => r.id === conv.used_reply_id)
+                      .map((reply: any) => (
+                        <div key={reply.id}>
+                          <p className="text-sm text-slate-400 mb-1">我说：</p>
+                          <p className="text-white">{reply.content}</p>
+                        </div>
+                      ))}
+                  </div>
+                )}
+                <p className="text-xs text-slate-500 mt-3">
+                  {new Date(conv.created_at).toLocaleString('zh-CN')}
+                </p>
               </div>
             ))}
           </div>
@@ -335,35 +257,29 @@ export default function RelationshipDetailPage() {
 
       {/* 底部输入框 */}
       <div className="fixed bottom-0 left-0 right-0 bg-slate-950/95 backdrop-blur-sm border-t border-slate-800">
-        <div className="max-w-4xl mx-auto p-4">
-          <div className="flex gap-2">
+        <div className="max-w-4xl mx-auto px-4 py-4">
+          <div className="space-y-3">
             <Textarea
-              placeholder="💬 他/她现在说了什么？"
-              value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
-              className="bg-slate-800/50 border-slate-700 text-slate-200 placeholder:text-slate-500 min-h-[44px] max-h-[120px] resize-none"
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  handleGetAdvice();
-                }
-              }}
+              placeholder="对方说的话..."
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              className="bg-slate-900/50 border-slate-700 text-slate-200 min-h-[60px] resize-none"
+            />
+            <input
+              type="text"
+              placeholder="背景信息（可选）"
+              value={context}
+              onChange={(e) => setContext(e.target.value)}
+              className="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200"
             />
             <Button
               onClick={handleGetAdvice}
-              disabled={isLoading || !newMessage.trim()}
-              className="bg-purple-600 hover:bg-purple-500 h-[44px] px-4 flex-shrink-0"
+              disabled={!message.trim() || isAnalyzing}
+              className="w-full h-12 bg-purple-600 hover:bg-purple-500"
             >
-              {isLoading ? (
-                <span className="animate-spin">⏳</span>
-              ) : (
-                <span>💎</span>
-              )}
+              {isAnalyzing ? "分析中..." : "💡 获取精准建议"}
             </Button>
           </div>
-          <p className="text-xs text-slate-500 mt-2 text-center">
-            基于你的档案，生成高质量建议
-          </p>
         </div>
       </div>
     </div>
