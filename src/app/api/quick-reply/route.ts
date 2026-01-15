@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import { supabaseAdmin } from '@/lib/supabase';
-import { generateSmartPrompt, ConversationContext, UserProfile } from '@/lib/smart-prompt';
+import { generateSmartPrompt, ConversationContext, SuccessPattern, FailedPattern } from '@/lib/smart-prompt';
 import type { QuickReplyRequest, QuickReplyResponse } from '@/types';
 
 const openai = new OpenAI({
@@ -55,18 +55,25 @@ export async function POST(request: Request) {
             .limit(5);
 
           if (conversations && conversations.length > 0) {
-            conversationContext.successfulPatterns = conversations
-              .filter(c => c.used_reply_id && c.replies)
-              .map(c => {
+            const patterns: SuccessPattern[] = [];
+            
+            for (const c of conversations) {
+              if (c.used_reply_id && c.replies) {
                 const usedReply = c.replies.find((r: any) => r.id === c.used_reply_id);
-                return usedReply ? {
-                  strategy: usedReply.strategy || '未知策略',
-                  successRate: 100, // 简化计算
-                  example: usedReply.content
-                } : null;
-              })
-              .filter(Boolean)
-              .slice(0, 3); // 最多3个
+                if (usedReply) {
+                  patterns.push({
+                    strategy: usedReply.strategy || '未知策略',
+                    successRate: 100,
+                    example: usedReply.content
+                  });
+                }
+              }
+              if (patterns.length >= 3) break;
+            }
+            
+            if (patterns.length > 0) {
+              conversationContext.successfulPatterns = patterns;
+            }
           }
 
           // 加载失败模式
@@ -79,17 +86,24 @@ export async function POST(request: Request) {
             .limit(3);
 
           if (failedConvs && failedConvs.length > 0) {
-            conversationContext.failedPatterns = failedConvs
-              .filter(c => c.used_reply_id && c.replies)
-              .map(c => {
+            const failedPatterns: FailedPattern[] = [];
+            
+            for (const c of failedConvs) {
+              if (c.used_reply_id && c.replies) {
                 const usedReply = c.replies.find((r: any) => r.id === c.used_reply_id);
-                return usedReply ? {
-                  strategy: usedReply.strategy || '未知策略',
-                  reason: '未达到预期效果'
-                } : null;
-              })
-              .filter(Boolean)
-              .slice(0, 2); // 最多2个
+                if (usedReply) {
+                  failedPatterns.push({
+                    strategy: usedReply.strategy || '未知策略',
+                    reason: '未达到预期效果'
+                  });
+                }
+              }
+              if (failedPatterns.length >= 2) break;
+            }
+            
+            if (failedPatterns.length > 0) {
+              conversationContext.failedPatterns = failedPatterns;
+            }
           }
         }
       } catch (error) {
