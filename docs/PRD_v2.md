@@ -172,7 +172,7 @@ interface Contact {
 ### 4.3 关系类型 & 阶段
 
 | 关系类型 | Emoji | 可选阶段 |
-|---------|-------|--------|
+|---------|-------|---------|
 | 恋爱 | 💕 | 暧昧期、热恋期、稳定期、冷战期、分手边缘 |
 | 职场 | 💼 | 上级、同级、下属、客户、合作伙伴 |
 | 家庭 | 👨‍👩‍👧 | 父母、子女、配偶、兄弟姐妹、其他亲戚 |
@@ -207,7 +207,117 @@ interface Contact {
 
 ---
 
-## 六、开发优先级
+## 六、Agent输出格式
+
+### 6.1 场景分析师输出
+
+```json
+{
+  "scene": {
+    "category": "恋爱",
+    "subCategory": "冲突修复",
+    "description": "因为异地产生的误会"
+  },
+  "otherPartyAnalysis": {
+    "currentEmotion": {
+      "primary": "受伤",
+      "secondary": "失望",
+      "intensity": 7
+    },
+    "surfaceNeed": "希望对方道歉",
+    "deepNeed": "希望被重视、被放在心上",
+    "triggers": ["讲道理", "找借口"],
+    "soothers": ["主动认错", "表达在意"]
+  },
+  "communicationGoal": "先安抚情绪，再解决问题"
+}
+```
+
+### 6.2 风格顾问输出
+
+```json
+{
+  "strategy": "共情安抚",
+  "script": "我知道你现在很难过，是我没有考虑到你的感受...",
+  "explanation": "先承认对方的感受，打开沟通的窗口",
+  "successRate": 75,
+  "riskLevel": "low",
+  "riskNote": "如果对方想要实际解决方案，可能觉得不够",
+  "nextPossible": [
+    {
+      "theyMightSay": "你知道就好",
+      "youCanReply": "那我们好好聊聊？"
+    },
+    {
+      "theyMightSay": "每次都是嘴上说",
+      "youCanReply": "我理解你的担心，我会用行动证明的"
+    }
+  ]
+}
+```
+
+---
+
+## 七、数据存储
+
+### 7.1 本地存储（MVP阶段）
+
+使用 localStorage 存储：
+- 对象列表（contacts）
+- 对话历史（messages）
+- 用户偏好（preferences）
+
+### 7.2 后续迁移 Supabase
+
+表结构：
+- `users` - 用户表
+- `contacts` - 沟通对象
+- `conversations` - 对话记录
+- `messages` - 消息记录
+- `preferences` - 用户偏好
+
+---
+
+## 八、技术实现要点
+
+### 8.1 API 调用策略
+
+**方案：一次调用，前端模拟对话流**
+
+```
+POST /api/chat
+  ↓
+后端一次调用 GPT-4o，返回所有 Agent 结果
+  ↓
+前端依次渲染，模拟对话流动画效果
+```
+
+### 8.2 新增文件结构
+
+```
+src/
+├── app/
+│   ├── api/
+│   │   └── chat/
+│   │       └── route.ts      # 多Agent对话API
+│   └── page.tsx              # 重构为聊天界面
+├── components/
+│   └── chat/
+│       ├── ChatSidebar.tsx   # 左侧对象列表
+│       ├── ChatArea.tsx      # 右侧对话区域
+│       ├── ChatInput.tsx     # 底部输入框
+│       ├── AgentMessage.tsx  # Agent消息卡片
+│       ├── UserMessage.tsx   # 用户消息
+│       └── AddContactModal.tsx # 添加对象弹窗
+├── types/
+│   └── chat.ts               # 类型定义
+└── lib/
+    └── agents.ts             # Agent Prompts
+```
+
+---
+
+## 九、开发优先级
 
 ### P0 - 核心功能（本周）
 - [ ] 微信风格聊天界面（左右分栏）
@@ -228,10 +338,16 @@ interface Contact {
 
 ---
 
-## 七、更新日志
+## 十、更新日志
 
-### v2.0 PRD (2026-01-15)
-- 产品定位升级：从"话术生成器"到"私人沟通教练"
-- 新增多Agent系统设计
-- 新增关系档案系统
-- 界面改为微信风格对话式交互
+### v2.0 (2026-01-15)
+- 🎯 产品定位升级：从话术生成器 → 私人沟通教练
+- 🤖 多Agent系统：5个角色协作
+- 💬 微信风格界面：对话式交互
+- 📝 关系档案系统：记住每段关系
+- @ 追问功能：深入某个方向
+
+### v1.0 (2026-01-12)
+- 🎉 MVP 上线
+- 截图上传和 AI 分析
+- 情绪诊断、问题识别、策略推荐
