@@ -60,31 +60,17 @@ export interface Reply {
   content: string;
   strategy: string;
   strategyType: string;
-  explanation: string;
   whyThis: string;
   riskLevel: RiskLevel;
-  riskReason?: string;
-  prediction: {
-    scenario1: { probability: number; response: string };
-    scenario2: { probability: number; response: string };
-    scenario3: { probability: number; response: string };
-  };
-  fitsGoal: boolean;
-  fitsPersona: boolean;
 }
 
 export interface QuickReplyResponse {
-  analysis: {
-    emotion: string;
-    intention: string;
-    context: string;
-  };
-  suggestedStrategy: {
-    name: string;
-    type: string;
-    reason: string;
-    fitsRelationship: boolean;
+  analysis?: {
+    subtext?: string;
+    emotion?: string;
+    risk?: string;
   };
   replies: Reply[];
   recommendedReplyId: string;
+  tips?: string;
 }
