@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, use } from "react";
+import { useState, useEffect } from "react";
+import { useParams } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -32,12 +33,10 @@ interface Conversation {
   created_at: string;
 }
 
-interface PageProps {
-  params: Promise<{ id: string }>;
-}
-
-export default function RelationshipDetailPage({ params }: PageProps) {
-  const { id } = use(params);
+export default function RelationshipDetailPage() {
+  const params = useParams();
+  const id = params?.id as string;
+  
   const [relationship, setRelationship] = useState<Relationship | null>(null);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -47,7 +46,9 @@ export default function RelationshipDetailPage({ params }: PageProps) {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   useEffect(() => {
-    loadData();
+    if (id) {
+      loadData();
+    }
   }, [id]);
 
   const loadData = async () => {
