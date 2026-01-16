@@ -1,16 +1,34 @@
 # 🗣️ AI 沟通教练
 
-> 像心理咨询师一样帮你看懂对方，像沟通教练一样教你怎么说
+> 你的 24小时私人沟通教练，记住每段关系的历史，给出最适合你的建议
 
 [![Deploy with Vercel](https://vercel.com/button)](https://aigoutongjiaolian0112.vercel.app/)
 
-## ✨ 功能特点
+## ✨ v2.0 新功能
 
-- 📸 **截图分析** - 上传聊天截图，AI 自动识别对话内容
-- 🎭 **情绪诊断** - 分析双方情绪状态和强度
-- ⚠️ **问题识别** - 找出沟通中的核心问题
-- 💡 **策略推荐** - 提供3个差异化沟通策略
-- 💬 **话术指导** - 分步话术模板 + 使用解释
+### 🤖 多Agent顾问团
+5位AI顾问协作，给你不同视角的建议：
+
+| 顾问 | 风格 | 适用场景 |
+|------|------|----------|
+| 🎯 场景分析师 | 分析识别 | 理解对方真实需求 |
+| 🤗 温柔派 | 共情安抚 | 对方情绪激动时 |
+| 😄 幽默派 | 轻松化解 | 气氛紧张需破冰 |
+| 😎 高冷派 | 保持距离 | 需要欲擒故纵时 |
+| 💪 直球派 | 真诚直接 | 有话直说的场合 |
+
+### 💬 微信风格界面
+- 左侧：对象列表（管理多段关系）
+- 右侧：对话区域（Agent回复纵向展示）
+- 底部：@追问（深入某个方向）
+
+### 📋 实用功能
+- ✅ 话术一键复制
+- ✅ 成功率评估 + 风险提示
+- ✅ 关系档案记忆
+- ✅ 本地数据持久化
+
+---
 
 ## 🚀 快速开始
 
@@ -32,6 +50,8 @@ npm run dev
 
 打开 http://localhost:3000 查看应用
 
+---
+
 ## 🛠️ 技术栈
 
 - **框架**: Next.js 16 (App Router)
@@ -41,22 +61,51 @@ npm run dev
 - **AI**: OpenAI GPT-4o
 - **部署**: Vercel
 
+---
+
 ## 📁 项目结构
 
 ```
 src/
 ├── app/
-│   ├── api/analyze/route.ts  # AI 分析接口
-│   ├── page.tsx              # 主页面
-│   ├── layout.tsx            # 布局
-│   └── globals.css           # 全局样式
-├── components/ui/            # UI 组件
-└── lib/utils.ts              # 工具函数
+│   ├── api/chat/route.ts     # 多Agent对话API
+│   ├── chat/page.tsx         # 聊天界面
+│   ├── home/page.tsx         # 首页
+│   └── quick-reply/page.tsx  # 快速回复
+├── components/
+│   ├── chat/                 # 聊天组件
+│   │   ├── ChatSidebar.tsx   # 左侧对象列表
+│   │   ├── ChatArea.tsx      # 对话区域
+│   │   ├── ChatInput.tsx     # 输入框(@追问)
+│   │   └── AgentMessage.tsx  # Agent消息
+│   └── ui/                   # UI组件
+├── types/
+│   └── chat.ts               # 类型定义
+└── lib/
+    └── agents.ts             # Agent Prompts
 ```
+
+---
 
 ## 📖 文档
 
-详细项目文档请查看 [PROJECT_DOC.md](./PROJECT_DOC.md)
+- [PROJECT_DOC.md](./PROJECT_DOC.md) - 详细项目文档
+- [docs/PRD_v2.md](./docs/PRD_v2.md) - v2.0 产品需求文档
+
+---
+
+## 📅 更新日志
+
+### v2.0.0 (2026-01-15)
+- 🤖 多Agent系统上线
+- 💬 微信风格聊天界面
+- @ @追问功能
+- 📋 话术复制
+
+### v1.0.0 (2026-01-12)
+- 🎉 MVP 上线
+
+---
 
 ## 📝 License
 
