@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import { supabaseAdmin } from '@/lib/supabase';
 import type { ScreenshotAnalysisRequest, ScreenshotAnalysisResponse } from '@/types';
+// supabase 可能为 null（未配置时）
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -83,11 +84,12 @@ export async function POST(request: Request) {
 
     const analysis = JSON.parse(result);
 
-    // 保存到数据库
+    // 保存到数据库（仅在 Supabase 已配置时）
     let savedAnalysisId: string | null = null;
 
-    if (userId) {
-      const { data: savedAnalysis, error: saveError } = await supabaseAdmin()
+    const db = supabaseAdmin();
+    if (userId && db) {
+      const { data: savedAnalysis, error: saveError } = await db
         .from('screenshot_analysis')
         .insert({
           user_id: userId,

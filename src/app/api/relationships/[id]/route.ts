@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabaseAdmin } from "@/lib/supabase";
+import { supabaseAdmin, requireSupabase } from "@/lib/supabase";
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -14,10 +14,13 @@ export async function GET(
   context: RouteContext
 ) {
   try {
+    const unavailable = requireSupabase();
+    if (unavailable) return unavailable;
+
     const { id } = await context.params;
     const userId = request.headers.get("x-user-id") || "test-user-001";
 
-    const { data, error } = await supabaseAdmin()
+    const { data, error } = await supabaseAdmin()!
       .from("relationships")
       .select("*")
       .eq("id", id)
@@ -53,11 +56,14 @@ export async function PATCH(
   context: RouteContext
 ) {
   try {
+    const unavailable = requireSupabase();
+    if (unavailable) return unavailable;
+
     const { id } = await context.params;
     const userId = request.headers.get("x-user-id") || "test-user-001";
     const body = await request.json();
 
-    const { data, error } = await supabaseAdmin()
+    const { data, error } = await supabaseAdmin()!
       .from("relationships")
       .update(body)
       .eq("id", id)
@@ -86,10 +92,13 @@ export async function DELETE(
   context: RouteContext
 ) {
   try {
+    const unavailable = requireSupabase();
+    if (unavailable) return unavailable;
+
     const { id } = await context.params;
     const userId = request.headers.get("x-user-id") || "test-user-001";
 
-    const { error } = await supabaseAdmin()
+    const { error } = await supabaseAdmin()!
       .from("relationships")
       .delete()
       .eq("id", id)

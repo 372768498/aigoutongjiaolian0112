@@ -26,11 +26,12 @@ export async function POST(request: Request) {
       background: context,
     };
 
-    // 如果有 relationshipId，加载用户档案
-    if (relationshipId) {
+    // 如果有 relationshipId 且 Supabase 已配置，加载用户档案
+    const db = supabaseAdmin();
+    if (relationshipId && db) {
       try {
         // 加载关系档案
-        const { data: relationship, error: relError } = await supabaseAdmin()
+        const { data: relationship, error: relError } = await db
           .from('relationships')
           .select('*')
           .eq('id', relationshipId)
@@ -46,7 +47,7 @@ export async function POST(request: Request) {
           };
 
           // 加载成功模式（从历史对话中提取）
-          const { data: conversations } = await supabaseAdmin()
+          const { data: conversations } = await db
             .from('conversations')
             .select('used_reply_id, replies, effectiveness')
             .eq('relationship_id', relationshipId)
@@ -77,7 +78,7 @@ export async function POST(request: Request) {
           }
 
           // 加载失败模式
-          const { data: failedConvs } = await supabaseAdmin()
+          const { data: failedConvs } = await db
             .from('conversations')
             .select('used_reply_id, replies')
             .eq('relationship_id', relationshipId)

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabaseAdmin } from "@/lib/supabase";
+import { supabaseAdmin, requireSupabase } from "@/lib/supabase";
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -14,12 +14,15 @@ export async function GET(
   context: RouteContext
 ) {
   try {
+    const unavailable = requireSupabase();
+    if (unavailable) return unavailable;
+
     const { id } = await context.params;
     const { searchParams } = new URL(request.url);
     const limit = parseInt(searchParams.get("limit") || "20");
     const offset = parseInt(searchParams.get("offset") || "0");
 
-    const { data, error, count } = await supabaseAdmin()
+    const { data, error, count } = await supabaseAdmin()!
       .from("conversations")
       .select("*", { count: "exact" })
       .eq("relationship_id", id)
@@ -52,6 +55,9 @@ export async function POST(
   context: RouteContext
 ) {
   try {
+    const unavailable = requireSupabase();
+    if (unavailable) return unavailable;
+
     const { id } = await context.params;
     const body = await request.json();
 
@@ -71,7 +77,7 @@ export async function POST(
       );
     }
 
-    const { data, error } = await supabaseAdmin()
+    const { data, error } = await supabaseAdmin()!
       .from("conversations")
       .insert({
         relationship_id: id,

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabaseAdmin } from "@/lib/supabase";
+import { supabaseAdmin, requireSupabase } from "@/lib/supabase";
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -14,12 +14,15 @@ export async function PATCH(
   context: RouteContext
 ) {
   try {
+    const unavailable = requireSupabase();
+    if (unavailable) return unavailable;
+
     const { id } = await context.params;
     const body = await request.json();
 
     const { usedReplyId, effectiveness, feedbackNote } = body;
 
-    const { data, error } = await supabaseAdmin()
+    const { data, error } = await supabaseAdmin()!
       .from("conversations")
       .update({
         used_reply_id: usedReplyId,

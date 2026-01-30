@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabaseAdmin } from "@/lib/supabase";
+import { supabaseAdmin, requireSupabase } from "@/lib/supabase";
 
 /**
  * GET /api/relationships
@@ -7,11 +7,12 @@ import { supabaseAdmin } from "@/lib/supabase";
  */
 export async function GET(request: NextRequest) {
   try {
-    // TODO: 从 session 获取 user_id
-    // 目前使用测试 user_id
+    const unavailable = requireSupabase();
+    if (unavailable) return unavailable;
+
     const userId = request.headers.get("x-user-id") || "test-user-001";
 
-    const { data, error } = await supabaseAdmin()
+    const { data, error } = await supabaseAdmin()!
       .from("relationships")
       .select("*")
       .eq("user_id", userId)
@@ -35,6 +36,9 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
+    const unavailable = requireSupabase();
+    if (unavailable) return unavailable;
+
     const userId = request.headers.get("x-user-id") || "test-user-001";
     const body = await request.json();
 
@@ -54,7 +58,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { data, error } = await supabaseAdmin()
+    const { data, error } = await supabaseAdmin()!
       .from("relationships")
       .insert({
         user_id: userId,
