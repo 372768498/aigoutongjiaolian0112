@@ -14,8 +14,13 @@ export default function HomePage() {
                 <span className="text-xl">💬</span>
               </div>
               <div>
-                <h1 className="text-lg md:text-xl font-bold text-white">AI 沟通教练</h1>
-                <p className="text-xs text-slate-400">让每一句话都说到心坎里</p>
+                <div className="flex items-center gap-2">
+                  <h1 className="text-lg md:text-xl font-bold text-white">AI 沟通教练</h1>
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-gradient-to-r from-amber-400 to-yellow-300 text-slate-900 animate-pulse shadow-lg shadow-amber-500/20">
+                    ⚡ MAX POWER
+                  </span>
+                </div>
+                <p className="text-xs text-slate-400">AI 驱动 · 看懂对方 · 高效表达</p>
               </div>
             </div>
           </div>
